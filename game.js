@@ -32,9 +32,9 @@ class GoalieClicker {
         this.config = {
             "bg": {
                 "path": "background.png",
-                "x_rel": 0.00,
-                "y_rel": 0.25,
-                "scale": 0.5
+                "x_rel": 0.1,
+                "y_rel": 0.05,
+                "scale": 0.8
             },
             "goalieL": {
                 "img": "keepL.png",
@@ -108,20 +108,22 @@ class GoalieClicker {
 
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         this.computeGameRect();
+        this.updateUIElements();
     }
 
     computeGameRect() {
+        // Используем те же размеры, что и у .game-area в CSS
         const maxW = Math.floor(window.innerWidth * 0.95);
         const maxH = Math.floor(window.innerHeight * 0.95);
         
-        // Вертикальная ориентация - рассчитываем по высоте
-        let targetH = maxH;
-        let targetW = Math.floor(targetH * this.ASPECT_W / this.ASPECT_H);
+        // Берем максимально возможный размер в пределах 9:16
+        let targetW = Math.min(maxW, maxH * this.ASPECT_W / this.ASPECT_H);
+        let targetH = targetW * this.ASPECT_H / this.ASPECT_W;
         
-        // Если ширина не помещается - корректируем
-        if (targetW > maxW) {
-            targetW = maxW;
-            targetH = Math.floor(targetW * this.ASPECT_H / this.ASPECT_W);
+        // Если высота не помещается - корректируем
+        if (targetH > maxH) {
+            targetH = maxH;
+            targetW = targetH * this.ASPECT_W / this.ASPECT_H;
         }
         
         const gx = (window.innerWidth - targetW) / 2;
@@ -132,8 +134,10 @@ class GoalieClicker {
 
     updateUIElements() {
         const goalElement = document.getElementById('goalText');
-        goalElement.style.left = `${window.innerWidth * 0.5}px`;
-        goalElement.style.top = `${window.innerHeight * 0.15}px`; // Выше для вертикального формата
+        if (goalElement) {
+            goalElement.style.left = `${this.gameRect.x + this.gameRect.width * 0.5}px`;
+            goalElement.style.top = `${this.gameRect.y + this.gameRect.height * 0.15}px`;
+        }
     }
 
     async loadAssets() {
