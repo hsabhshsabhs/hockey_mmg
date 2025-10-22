@@ -39,13 +39,13 @@ class GoalieClicker {
             "goalieL": {
                 "img": "keepL.png",
                 "x_rel": 0.355,
-                "y_rel": 0.465,
+                "y_rel": 0.468,
                 "scale": 0.3399999999999996
             },
             "goalieR": {
                 "img": "keepR.png",
                 "x_rel": 0.487,
-                "y_rel": 0.465,
+                "y_rel": 0.468,
                 "scale": 0.3399999999999996
             },
             "spawns": [
@@ -78,8 +78,7 @@ class GoalieClicker {
 
     detectMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-               (window.innerWidth <= 768) ||
-               ('ontouchstart' in window);
+               (window.innerWidth <= 768);
     }
 
     init() {
@@ -97,10 +96,26 @@ class GoalieClicker {
     }
 
     resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        
+        const dpr = window.devicePixelRatio || 1;
+        // CSS size we want the canvas to appear (in CSS pixels)
+        const cssWidth = window.innerWidth;
+        const cssHeight = window.innerHeight;
+
+        // Set the visible size (css)
+        this.canvas.style.width = cssWidth + 'px';
+        this.canvas.style.height = cssHeight + 'px';
+
+        // Set the actual drawing buffer size (device pixels)
+        this.canvas.width = Math.max(1, Math.round(cssWidth * dpr));
+        this.canvas.height = Math.max(1, Math.round(cssHeight * dpr));
+
+        // Scale the drawing context so that 1 unit = 1 CSS pixel
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Recompute any game rects based on CSS pixels (not device pixels)
         this.computeGameRect();
-        this.updateUIElements();
+
     }
 
     computeGameRect() {
@@ -129,8 +144,12 @@ class GoalieClicker {
 
     async loadAssets() {
         this.assets = {};
+        
+        // Загрузка изображений
         await this.loadImages();
-        // Звуки загружаются по требованию
+        
+        // Загрузка звуков
+        await this.loadSounds();
     }
 
     loadImages() {
@@ -144,6 +163,11 @@ class GoalieClicker {
             let loadedCount = 0;
             const totalToLoad = imagesToLoad.length;
 
+            if (totalToLoad === 0) {
+                resolve();
+                return;
+            }
+
             imagesToLoad.forEach(img => {
                 this.assets[img.key] = new Image();
                 this.assets[img.key].onload = () => {
@@ -151,12 +175,36 @@ class GoalieClicker {
                     if (loadedCount === totalToLoad) resolve();
                 };
                 this.assets[img.key].onerror = () => {
+                    console.warn(`Не удалось загрузить изображение: ${img.path}`);
                     loadedCount++;
                     if (loadedCount === totalToLoad) resolve();
                 };
                 this.assets[img.key].src = `assets/${img.path}`;
             });
         });
+    }
+
+    async loadSounds() {
+        this.sounds = {};
+        const soundsToLoad = [
+            { key: 'background', path: 'game.mp3' },
+            { key: 'save', path: 'save.mp3' },
+            { key: 'miss', path: 'miss.mp3' }
+        ];
+
+        for (const sound of soundsToLoad) {
+            try {
+                const audio = new Audio();
+                audio.src = `assets/${sound.path}`;
+                audio.preload = 'auto';
+                this.sounds[sound.key] = audio;
+                
+                // Пробуем предзагрузить
+                await audio.load();
+            } catch (error) {
+                console.warn(`Не удалось загрузить звук: ${sound.path}`, error);
+            }
+        }
     }
 
     setupEventListeners() {
@@ -175,26 +223,9 @@ class GoalieClicker {
         
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         
-        // Автозапуск аудио по первому клику
-        this.enableAudio();
-    }
-
-    enableAudio() {
-        // Создаем и сразу останавливаем звук чтобы разблокировать аудио
-        try {
-            const silentAudio = new Audio();
-            silentAudio.volume = 0.001;
-            const playPromise = silentAudio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    silentAudio.pause();
-                }).catch(() => {
-                    // Игнорируем ошибки
-                });
-            }
-        } catch (e) {
-            // Игнорируем ошибки
-        }
+        // Автозапуск аудио по первому клику (требование браузеров)
+        document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
+        document.addEventListener('touchstart', () => this.resumeAudioContext(), { once: true });
     }
 
     handleMouseMove(event) {
@@ -202,12 +233,20 @@ class GoalieClicker {
         this.mouseX = event.clientX - rect.left;
         this.mouseY = event.clientY - rect.top;
         
+        // Проверяем, находится ли курсор в игровой области
         this.mouseInGameArea = (
             this.mouseX >= this.gameRect.x && 
             this.mouseX <= this.gameRect.x + this.gameRect.width &&
             this.mouseY >= this.gameRect.y && 
             this.mouseY <= this.gameRect.y + this.gameRect.height
         );
+    }
+
+    resumeAudioContext() {
+        // Для совместимости с авто-воспроизведением в браузерах
+        if (this.audioContext) {
+            this.audioContext.resume();
+        }
     }
 
     setupUI() {
@@ -236,6 +275,7 @@ class GoalieClicker {
         this.speedMult = 1.0;
         this.goalieSide = "L";
         
+        // Сброс системы задержки звука
         this.saveSoundCooldown = 0;
         this.saveSoundEnabled = true;
         
@@ -303,6 +343,10 @@ class GoalieClicker {
         this.updatePucks(dt);
         this.updateHUD();
         this.updateGoalText(dt);
+        
+        if (this.debugMode) {
+            this.updateDebugInfo();
+        }
     }
 
     spawnPuck() {
@@ -316,6 +360,7 @@ class GoalieClicker {
     }
 
     updatePucks(dt) {
+        // Обновляем таймер задержки звука сейва
         if (this.saveSoundCooldown > 0) {
             this.saveSoundCooldown -= dt;
             if (this.saveSoundCooldown <= 0) {
@@ -339,11 +384,20 @@ class GoalieClicker {
                 if (this.goalieSide === targetSide) {
                     puck.fade = true;
                     this.score++;
+                    
+                    // Воспроизводим звук сейва только если разрешено
+                    if (this.saveSoundEnabled) {
+                        this.playSaveSound();
+                        // Устанавливаем случайную задержку 10-15 секунд
+                        this.saveSoundCooldown = 3 + Math.random() * 3; // 10-15 секунд
+                        this.saveSoundEnabled = false;
+                    }
                 } else {
                     puck.alive = false;
                     if (!(this.debugMode && this.infiniteLives)) {
                         this.lives--;
                     }
+                    this.playMissSound();
                     this.showGoalText = true;
                     this.goalTextTimer = 0;
                     
@@ -379,6 +433,19 @@ class GoalieClicker {
         }
     }
 
+    updateDebugInfo() {
+        const debugElement = document.getElementById('debugInfo');
+        if (debugElement) {
+            let debugText = `Отладка: Spawns: ${this.spawns.length}, Targets: ${this.targets.length}`;
+            debugText += `<br>LineY: ${this.lineY.toFixed(1)}, SpeedMult: ${this.speedMult.toFixed(2)}`;
+            debugText += `<br>Pucks: ${this.pucks.length}, Goalie: ${this.goalieSide}`;
+            debugText += `<br>Звук: ${this.muted ? 'выкл' : 'вкл'}`;
+            debugText += `<br>Sound CD: ${this.saveSoundCooldown.toFixed(1)}s, Enabled: ${this.saveSoundEnabled}`;
+            
+            debugElement.innerHTML = debugText;
+        }
+    }
+
     render() {
         this.ctx.fillStyle = '#0a121e';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -386,6 +453,11 @@ class GoalieClicker {
         this.drawGameArea();
         this.pucks.forEach(puck => puck.draw(this.ctx, this.gameRect));
         this.drawGoalie();
+        
+        if (this.debugMode) {
+            this.drawDebugMarkers();
+            this.drawCursorCoordinates();
+        }
     }
 
     renderStaticScreens() {
@@ -393,6 +465,39 @@ class GoalieClicker {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.drawGameArea();
+        
+        if (this.debugMode) {
+            this.drawDebugMarkers();
+            this.drawCursorCoordinates();
+        }
+    }
+
+    drawCursorCoordinates() {
+        if (!this.mouseInGameArea) return;
+        
+        // Вычисляем относительные координаты в игровой области
+        const relX = (this.mouseX - this.gameRect.x) / this.gameRect.width;
+        const relY = (this.mouseY - this.gameRect.y) / this.gameRect.height;
+        
+        // Рисуем крестик на позиции курсора
+        this.ctx.strokeStyle = '#ffff00';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.mouseX - 10, this.mouseY);
+        this.ctx.lineTo(this.mouseX + 10, this.mouseY);
+        this.ctx.moveTo(this.mouseX, this.mouseY - 10);
+        this.ctx.lineTo(this.mouseX, this.mouseY + 10);
+        this.ctx.stroke();
+        
+        // Рисуем фон для текста
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(this.mouseX + 15, this.mouseY + 15, 150, 40);
+        
+        // Рисуем текст с координатами
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '14px Arial';
+        this.ctx.fillText(`X: ${relX.toFixed(3)}`, this.mouseX + 20, this.mouseY + 35);
+        this.ctx.fillText(`Y: ${relY.toFixed(3)}`, this.mouseX + 20, this.mouseY + 55);
     }
 
     drawGameArea() {
@@ -402,6 +507,8 @@ class GoalieClicker {
         if (this.assets && this.assets.bg && this.assets.bg.complete) {
             this.drawBackground();
         }
+        
+        // Линия ворот больше не отрисовывается (убрано)
     }
 
     drawBackground() {
@@ -430,6 +537,68 @@ class GoalieClicker {
             const height = this.assets[assetKey].height * scale;
             
             this.ctx.drawImage(this.assets[assetKey], x, y, width, height);
+        } else {
+            const gx = this.gameRect.x + (this.goalieSide === "L" ? this.gameRect.width * 0.355 : this.gameRect.width * 0.45);
+            const gy = this.gameRect.y + this.gameRect.height * 0.42;
+            
+            this.ctx.fillStyle = '#0c3c78';
+            this.ctx.fillRect(gx - 40, gy - 40, 80, 80);
+        }
+    }
+
+    drawDebugMarkers() {
+        this.ctx.fillStyle = '#00ff00';
+        this.spawns.forEach((spawn, index) => {
+            const x = this.gameRect.x + spawn.x;
+            const y = this.gameRect.y + spawn.y;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            this.ctx.fillStyle = '#00ff00';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(`S${index}`, x + 10, y - 10);
+            this.ctx.fillText(`(${(spawn.x/this.gameRect.width).toFixed(3)}, ${(spawn.y/this.gameRect.height).toFixed(3)})`, x + 10, y + 20);
+        });
+
+        this.ctx.fillStyle = '#ff0000';
+        this.targets.forEach((target, index) => {
+            const x = this.gameRect.x + target.x;
+            const y = this.gameRect.y + target.y;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(`T${index}`, x + 10, y - 10);
+            this.ctx.fillText(`(${(target.x/this.gameRect.width).toFixed(3)}, ${(target.y/this.gameRect.height).toFixed(3)})`, x + 10, y + 20);
+        });
+
+        this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+        this.ctx.lineWidth = 1;
+        this.spawns.forEach(spawn => {
+            this.targets.forEach(target => {
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.gameRect.x + spawn.x, this.gameRect.y + spawn.y);
+                this.ctx.lineTo(this.gameRect.x + target.x, this.gameRect.y + target.y);
+                this.ctx.stroke();
+            });
+        });
+        
+        // В отладочном режиме показываем линию ворот красным цветом
+        if (this.debugMode) {
+            this.ctx.strokeStyle = '#ff0000';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.beginPath();
+            const lineYAbsolute = this.gameRect.y + this.lineY;
+            this.ctx.moveTo(this.gameRect.x, lineYAbsolute);
+            this.ctx.lineTo(this.gameRect.x + this.gameRect.width, lineYAbsolute);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
         }
     }
 
@@ -484,6 +653,7 @@ class GoalieClicker {
             case 'F1':
                 event.preventDefault();
                 this.debugMode = !this.debugMode;
+                document.getElementById('debugInfo').classList.toggle('hidden', !this.debugMode);
                 break;
             case 'F2':
                 event.preventDefault();
@@ -494,27 +664,58 @@ class GoalieClicker {
     }
 
     playBackgroundMusic() {
-        if (this.muted) return;
+        if (this.muted || !this.sounds.background) return;
         
         try {
-            // Создаем новый Audio для фоновой музыки
-            const audio = new Audio('assets/game.mp3');
-            audio.loop = true;
-            audio.volume = 0.7;
-            audio.play().catch(e => {
-                console.log('Фоновая музыка не воспроизвелась');
+            this.sounds.background.loop = true;
+            this.sounds.background.volume = 0.7;
+            this.sounds.background.play().catch(e => {
+                console.warn('Не удалось воспроизвести фоновую музыку:', e);
             });
-            // Сохраняем ссылку для управления
-            this.backgroundMusic = audio;
         } catch (error) {
-            console.log('Ошибка фоновой музыки');
+            console.warn('Ошибка воспроизведения фоновой музыки:', error);
         }
     }
 
     stopBackgroundMusic() {
-        if (this.backgroundMusic) {
-            this.backgroundMusic.pause();
-            this.backgroundMusic.currentTime = 0;
+        if (this.sounds.background) {
+            this.sounds.background.pause();
+            this.sounds.background.currentTime = 0;
+        }
+    }
+
+    playSaveSound() {
+        if (this.muted || !this.sounds.save) return;
+        
+        try {
+            // Создаем копию для возможности наложения звуков
+            const saveSound = this.sounds.save.cloneNode();
+            saveSound.volume = 1.0;
+            saveSound.play().catch(e => {
+                console.warn('Не удалось воспроизвести звук сейва:', e);
+            });
+        } catch (error) {
+            console.warn('Ошибка воспроизведения звука сейва:', error);
+        }
+    }
+
+    playMissSound() {
+        if (this.muted || !this.sounds.miss) return;
+        
+        try {
+            // Останавливаем звуки сейвов перед воспроизведением пропуска
+            if (this.sounds.save) {
+                this.sounds.save.pause();
+                this.sounds.save.currentTime = 0;
+            }
+            
+            const missSound = this.sounds.miss.cloneNode();
+            missSound.volume = 1.0;
+            missSound.play().catch(e => {
+                console.warn('Не удалось воспроизвести звук пропуска:', e);
+            });
+        } catch (error) {
+            console.warn('Ошибка воспроизведения звука пропуска:', error);
         }
     }
 
