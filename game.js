@@ -700,37 +700,44 @@ class GoalieClicker {
         }
     }
 
-    playSaveSound() {
-        if (this.muted || !this.sounds.save) return;
-        
-        try {
-            // Для GitHub Pages создаем новый экземпляр Audio каждый раз
-            const saveSound = new Audio();
-            saveSound.src = 'assets/save.mp3';
-            saveSound.volume = 1.0;
-            saveSound.play().catch(e => {
-                console.warn('Не удалось воспроизвести звук сейва:', e);
-            });
-        } catch (error) {
-            console.warn('Ошибка воспроизведения звука сейва:', error);
-        }
-    }
+    // В классе GoalieClicker замени только эти методы:
 
-    playMissSound() {
-        if (this.muted || !this.sounds.miss) return;
-        
-        try {
-            // Для GitHub Pages создаем новый экземпляр Audio каждый раз
-            const missSound = new Audio();
-            missSound.src = 'assets/miss.mp3';
-            missSound.volume = 1.0;
-            missSound.play().catch(e => {
-                console.warn('Не удалось воспроизвести звук пропуска:', e);
-            });
-        } catch (error) {
-            console.warn('Ошибка воспроизведения звука пропуска:', error);
-        }
+playSaveSound() {
+    if (this.muted) return;
+    
+    try {
+        // Простой способ - создаем новый Audio каждый раз
+        const audio = new Audio('assets/save.mp3');
+        audio.volume = 1.0;
+        audio.play().catch(e => {
+            console.log('Звук сейва не воспроизвелся:', e);
+        });
+    } catch (error) {
+        console.log('Ошибка звука сейва:', error);
     }
+}
+
+playMissSound() {
+    if (this.muted) return;
+    
+    try {
+        // Простой способ - создаем новый Audio каждый раз  
+        const audio = new Audio('assets/miss.mp3');
+        audio.volume = 1.0;
+        audio.play().catch(e => {
+            console.log('Звук пропуска не воспроизвелся:', e);
+        });
+    } catch (error) {
+        console.log('Ошибка звука пропуска:', error);
+    }
+}
+
+// И убери сложную загрузку звуков, оставь только это:
+async loadSounds() {
+    // Просто инициализируем объект, звуки будем создавать на лету
+    this.sounds = {};
+    console.log('Звуковая система инициализирована');
+}
 
     gameOver() {
         document.getElementById('gameOverScreen').classList.remove('hidden');
