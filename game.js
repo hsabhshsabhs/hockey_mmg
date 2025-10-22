@@ -109,6 +109,11 @@ class GoalieClicker {
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         this.computeGameRect();
         this.updateUIElements();
+        
+        // Принудительная перерисовка
+        if (!document.getElementById('startScreen').classList.contains('hidden')) {
+            this.renderStaticScreens();
+        }
     }
 
     computeGameRect() {
@@ -216,6 +221,32 @@ class GoalieClicker {
         
         document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
         document.addEventListener('touchstart', () => this.resumeAudioContext(), { once: true });
+        
+        // Обработчик изменения ориентации
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.forceRedraw();
+            }, 100);
+        });
+        
+        // Обработчик изменения видимости страницы
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                setTimeout(() => {
+                    this.forceRedraw();
+                }, 100);
+            }
+        });
+    }
+
+    forceRedraw() {
+        this.resizeCanvas();
+        if (!document.getElementById('startScreen').classList.contains('hidden') || 
+            !document.getElementById('gameOverScreen').classList.contains('hidden')) {
+            this.renderStaticScreens();
+        } else {
+            this.render();
+        }
     }
 
     handleMouseMove(event) {
@@ -293,6 +324,8 @@ class GoalieClicker {
         document.getElementById('gameOverScreen').classList.add('hidden');
         document.getElementById('hud').classList.remove('hidden');
         
+        // Пересчитываем размеры при старте игры
+        this.resizeCanvas();
         this.resetGameState();
         this.playBackgroundMusic();
     }
@@ -450,10 +483,30 @@ class GoalieClicker {
         
         this.drawGameArea();
         
+        // Для стартового экрана рисуем дополнительные элементы
+        if (!document.getElementById('startScreen').classList.contains('hidden')) {
+            this.drawStartScreenElements();
+        }
+        
         if (this.debugMode) {
             this.drawDebugMarkers();
             this.drawCursorCoordinates();
         }
+    }
+
+    drawStartScreenElements() {
+        // Рисуем вратарей на стартовом экране
+        this.drawGoalie();
+        
+        // Можно добавить текст или другие элементы
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(
+            'GOALIE CLICKER', 
+            this.gameRect.x + this.gameRect.width / 2, 
+            this.gameRect.y + this.gameRect.height * 0.3
+        );
     }
 
     drawCursorCoordinates() {
