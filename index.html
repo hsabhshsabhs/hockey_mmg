@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Goalie Clicker</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,21 +10,12 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- Стартовый экран -->
-        <div id="startScreen" class="screen">
-            <div class="game-area">
-                <button id="startButton" class="big-button">Начать</button>
-                <div class="hint" id="startHint"></div>
-            </div>
-        </div>
-
-        <!-- Экран Game Over -->
-        <div id="gameOverScreen" class="screen hidden">
-            <div class="game-over-content">
-                <h2>Игра окончена</h2>
-                <p id="finalScore">Ваш рекорд: 0</p>
-                <button id="restartButton" class="big-button">Играть снова</button>
-                <button id="subscribeButton" class="subscribe-button">Группа разработчика в ВК</button>
+        <!-- Экран ориентации -->
+        <div id="orientationScreen" class="screen">
+            <div class="orientation-message">
+                <h2>Поверните устройство</h2>
+                <p>Игра работает только в горизонтальной ориентации</p>
+                <div class="phone-icon">📱</div>
             </div>
         </div>
 
@@ -41,9 +32,6 @@
 
         <!-- Надпись ГОЛ -->
         <div id="goalText" class="goal-text hidden">ГОЛ!</div>
-
-        <!-- Отладочная информация -->
-        <div id="debugInfo" class="debug-info hidden"></div>
     </div>
 
     <script src="game.js"></script>
