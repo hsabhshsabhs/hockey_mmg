@@ -32,9 +32,9 @@ class GoalieClicker {
         this.config = {
             "bg": {
                 "path": "background.png",
-                "x_rel": 0.1,
-                "y_rel": 0.05,
-                "scale": 0.8
+                "x_rel": 0.001,
+                "y_rel": 0.25,
+                "scale": 0.5
             },
             "goalieL": {
                 "img": "keepL.png",
