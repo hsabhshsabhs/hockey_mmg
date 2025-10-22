@@ -51,8 +51,8 @@ body {
     position: relative;
     width: 95%;
     height: 95%;
-    max-width: 1600px;
-    max-height: 900px;
+    max-width: 360px;  /* Вертикальная ориентация */
+    max-height: 640px; /* Соотношение 9:16 */
     background: #0e1e37;
     border: 2px solid #1a3a5f;
 }
@@ -60,11 +60,11 @@ body {
 /* Кнопки */
 .big-button {
     position: absolute;
-    top: 25%;
+    top: 40%; /* Центр для вертикального формата */
     left: 50%;
     transform: translateX(-50%);
-    padding: 20px 40px;
-    font-size: 22px;
+    padding: 15px 25px;
+    font-size: 18px;
     background: #ffc832;
     color: #0a0a0a;
     border: none;
@@ -121,10 +121,10 @@ body {
 
 .hud-left {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    top: 80px;
+    left: 20px; /* Слева для вертикального формата */
+    top: 20px;
+    text-align: left;
+    transform: none; /* Убрать центрирование */
 }
 
 .hud-right {
@@ -136,17 +136,17 @@ body {
 
 #hud div {
     margin-bottom: 8px;
-    font-size: 18px;
+    font-size: 16px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Надпись ГОЛ */
 .goal-text {
     position: absolute;
-    top: 24.2%;
-    left: 46.9%;
+    top: 15%; /* Выше для вертикального формата */
+    left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 72px;
+    font-size: 48px;
     font-weight: bold;
     color: #ff3232;
     text-shadow: 
@@ -207,16 +207,21 @@ body {
 /* Адаптивность для мобильных */
 @media (max-height: 700px) {
     .big-button {
-        padding: 15px 30px;
-        font-size: 18px;
+        padding: 12px 20px;
+        font-size: 16px;
     }
     
     .goal-text {
-        font-size: 48px;
+        font-size: 36px;
     }
     
     #hud div {
-        font-size: 16px;
+        font-size: 14px;
+    }
+    
+    .game-area {
+        max-height: 560px;
+        max-width: 315px;
     }
 }
 
@@ -229,5 +234,18 @@ body {
     .subscribe-button {
         padding: 12px 24px;
         font-size: 16px;
+    }
+    
+    .game-area {
+        max-width: 320px;
+        max-height: 568px;
+    }
+}
+
+/* Для очень высоких экранов */
+@media (min-height: 800px) {
+    .game-area {
+        max-width: 405px;
+        max-height: 720px;
     }
 }
