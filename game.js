@@ -6,8 +6,8 @@ class GoalieClicker {
         
         // Конфигурация
         this.FPS = 60;
-        this.ASPECT_W = 16;
-        this.ASPECT_H = 9;
+        this.ASPECT_W = 9;    // Вертикальная ориентация
+        this.ASPECT_H = 16;
         this.PUCK_RADIUS = 14;
         this.START_LIVES = 3;
         this.MAX_SPEED_MULT = 5;
@@ -28,48 +28,48 @@ class GoalieClicker {
         this.saveSoundCooldown = 0;
         this.saveSoundEnabled = true;
         
-        // Адаптированный конфиг
+        // Адаптированный конфиг для вертикальной ориентации
         this.config = {
             "bg": {
                 "path": "background.png",
-                "x_rel": 0.2380375529981829,
-                "y_rel": 0.024482758620689655,
-                "scale": 0.84
+                "x_rel": 0.00,
+                "y_rel": 0.25,
+                "scale": 0.5
             },
             "goalieL": {
                 "img": "keepL.png",
-                "x_rel": 0.355,
-                "y_rel": 0.468,
-                "scale": 0.3399999999999996
+                "x_rel": 0.3,
+                "y_rel": 0.6,
+                "scale": 0.3
             },
             "goalieR": {
-                "img": "keepR.png",
-                "x_rel": 0.487,
-                "y_rel": 0.468,
-                "scale": 0.3399999999999996
+                "img": "keepR.png", 
+                "x_rel": 0.6,
+                "y_rel": 0.6,
+                "scale": 0.3
             },
             "spawns": [
                 {
-                    "x_rel": 0.288,
-                    "y_rel": 0.966
+                    "x_rel": 0.2,
+                    "y_rel": 0.85
                 },
                 {
-                    "x_rel": 0.712,
-                    "y_rel": 0.962
+                    "x_rel": 0.8,
+                    "y_rel": 0.85
                 }
             ],
             "targets": [
                 {
-                    "x_rel": 0.434,
-                    "y_rel": 0.627
+                    "x_rel": 0.3,
+                    "y_rel": 0.45
                 },
                 {
-                    "x_rel": 0.57,
-                    "y_rel": 0.627
+                    "x_rel": 0.7,
+                    "y_rel": 0.45
                 }
             ],
             "line": {
-                "y_rel": 0.625
+                "y_rel": 0.5
             }
         };
         
@@ -96,38 +96,32 @@ class GoalieClicker {
     }
 
     resizeCanvas() {
-        
         const dpr = window.devicePixelRatio || 1;
-        // CSS size we want the canvas to appear (in CSS pixels)
         const cssWidth = window.innerWidth;
         const cssHeight = window.innerHeight;
 
-        // Set the visible size (css)
         this.canvas.style.width = cssWidth + 'px';
         this.canvas.style.height = cssHeight + 'px';
 
-        // Set the actual drawing buffer size (device pixels)
         this.canvas.width = Math.max(1, Math.round(cssWidth * dpr));
         this.canvas.height = Math.max(1, Math.round(cssHeight * dpr));
 
-        // Scale the drawing context so that 1 unit = 1 CSS pixel
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        // Recompute any game rects based on CSS pixels (not device pixels)
         this.computeGameRect();
-
     }
 
     computeGameRect() {
         const maxW = Math.floor(window.innerWidth * 0.95);
         const maxH = Math.floor(window.innerHeight * 0.95);
         
-        let targetW = maxW;
-        let targetH = Math.floor(targetW * this.ASPECT_H / this.ASPECT_W);
+        // Вертикальная ориентация - рассчитываем по высоте
+        let targetH = maxH;
+        let targetW = Math.floor(targetH * this.ASPECT_W / this.ASPECT_H);
         
-        if (targetH > maxH) {
-            targetH = maxH;
-            targetW = Math.floor(targetH * this.ASPECT_W / this.ASPECT_H);
+        // Если ширина не помещается - корректируем
+        if (targetW > maxW) {
+            targetW = maxW;
+            targetH = Math.floor(targetW * this.ASPECT_H / this.ASPECT_W);
         }
         
         const gx = (window.innerWidth - targetW) / 2;
@@ -139,16 +133,12 @@ class GoalieClicker {
     updateUIElements() {
         const goalElement = document.getElementById('goalText');
         goalElement.style.left = `${window.innerWidth * 0.5}px`;
-        goalElement.style.top = `${window.innerHeight * 0.242}px`;
+        goalElement.style.top = `${window.innerHeight * 0.15}px`; // Выше для вертикального формата
     }
 
     async loadAssets() {
         this.assets = {};
-        
-        // Загрузка изображений
         await this.loadImages();
-        
-        // Загрузка звуков
         await this.loadSounds();
     }
 
@@ -198,8 +188,6 @@ class GoalieClicker {
                 audio.src = `assets/${sound.path}`;
                 audio.preload = 'auto';
                 this.sounds[sound.key] = audio;
-                
-                // Пробуем предзагрузить
                 await audio.load();
             } catch (error) {
                 console.warn(`Не удалось загрузить звук: ${sound.path}`, error);
@@ -216,14 +204,12 @@ class GoalieClicker {
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         this.canvas.addEventListener('touchstart', (e) => this.handleTouch(e), { passive: false });
         
-        // Отслеживание движения курсора для отладки
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseenter', () => this.mouseInGameArea = true);
         this.canvas.addEventListener('mouseleave', () => this.mouseInGameArea = false);
         
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         
-        // Автозапуск аудио по первому клику (требование браузеров)
         document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
         document.addEventListener('touchstart', () => this.resumeAudioContext(), { once: true });
     }
@@ -233,7 +219,6 @@ class GoalieClicker {
         this.mouseX = event.clientX - rect.left;
         this.mouseY = event.clientY - rect.top;
         
-        // Проверяем, находится ли курсор в игровой области
         this.mouseInGameArea = (
             this.mouseX >= this.gameRect.x && 
             this.mouseX <= this.gameRect.x + this.gameRect.width &&
@@ -243,7 +228,6 @@ class GoalieClicker {
     }
 
     resumeAudioContext() {
-        // Для совместимости с авто-воспроизведением в браузерах
         if (this.audioContext) {
             this.audioContext.resume();
         }
@@ -275,7 +259,6 @@ class GoalieClicker {
         this.speedMult = 1.0;
         this.goalieSide = "L";
         
-        // Сброс системы задержки звука
         this.saveSoundCooldown = 0;
         this.saveSoundEnabled = true;
         
@@ -360,7 +343,6 @@ class GoalieClicker {
     }
 
     updatePucks(dt) {
-        // Обновляем таймер задержки звука сейва
         if (this.saveSoundCooldown > 0) {
             this.saveSoundCooldown -= dt;
             if (this.saveSoundCooldown <= 0) {
@@ -385,11 +367,9 @@ class GoalieClicker {
                     puck.fade = true;
                     this.score++;
                     
-                    // Воспроизводим звук сейва только если разрешено
                     if (this.saveSoundEnabled) {
                         this.playSaveSound();
-                        // Устанавливаем случайную задержку 10-15 секунд
-                        this.saveSoundCooldown = 3 + Math.random() * 3; // 10-15 секунд
+                        this.saveSoundCooldown = 3 + Math.random() * 3;
                         this.saveSoundEnabled = false;
                     }
                 } else {
@@ -475,11 +455,9 @@ class GoalieClicker {
     drawCursorCoordinates() {
         if (!this.mouseInGameArea) return;
         
-        // Вычисляем относительные координаты в игровой области
         const relX = (this.mouseX - this.gameRect.x) / this.gameRect.width;
         const relY = (this.mouseY - this.gameRect.y) / this.gameRect.height;
         
-        // Рисуем крестик на позиции курсора
         this.ctx.strokeStyle = '#ffff00';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
@@ -489,11 +467,9 @@ class GoalieClicker {
         this.ctx.lineTo(this.mouseX, this.mouseY + 10);
         this.ctx.stroke();
         
-        // Рисуем фон для текста
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         this.ctx.fillRect(this.mouseX + 15, this.mouseY + 15, 150, 40);
         
-        // Рисуем текст с координатами
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = '14px Arial';
         this.ctx.fillText(`X: ${relX.toFixed(3)}`, this.mouseX + 20, this.mouseY + 35);
@@ -507,8 +483,6 @@ class GoalieClicker {
         if (this.assets && this.assets.bg && this.assets.bg.complete) {
             this.drawBackground();
         }
-        
-        // Линия ворот больше не отрисовывается (убрано)
     }
 
     drawBackground() {
@@ -538,8 +512,8 @@ class GoalieClicker {
             
             this.ctx.drawImage(this.assets[assetKey], x, y, width, height);
         } else {
-            const gx = this.gameRect.x + (this.goalieSide === "L" ? this.gameRect.width * 0.355 : this.gameRect.width * 0.45);
-            const gy = this.gameRect.y + this.gameRect.height * 0.42;
+            const gx = this.gameRect.x + (this.goalieSide === "L" ? this.gameRect.width * 0.3 : this.gameRect.width * 0.6);
+            const gy = this.gameRect.y + this.gameRect.height * 0.6;
             
             this.ctx.fillStyle = '#0c3c78';
             this.ctx.fillRect(gx - 40, gy - 40, 80, 80);
@@ -588,7 +562,6 @@ class GoalieClicker {
             });
         });
         
-        // В отладочном режиме показываем линию ворот красным цветом
         if (this.debugMode) {
             this.ctx.strokeStyle = '#ff0000';
             this.ctx.lineWidth = 2;
@@ -688,7 +661,6 @@ class GoalieClicker {
         if (this.muted || !this.sounds.save) return;
         
         try {
-            // Создаем копию для возможности наложения звуков
             const saveSound = this.sounds.save.cloneNode();
             saveSound.volume = 1.0;
             saveSound.play().catch(e => {
@@ -703,7 +675,6 @@ class GoalieClicker {
         if (this.muted || !this.sounds.miss) return;
         
         try {
-            // Останавливаем звуки сейвов перед воспроизведением пропуска
             if (this.sounds.save) {
                 this.sounds.save.pause();
                 this.sounds.save.currentTime = 0;
