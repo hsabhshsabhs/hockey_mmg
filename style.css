@@ -9,10 +9,8 @@ body {
     background: #0a121e;
     color: white;
     overflow: hidden;
-    touch-action: manipulation;
+    touch-action: none;
     user-select: none;
-    width: 100vw;
-    height: 100vh;
 }
 
 #gameContainer {
@@ -127,9 +125,6 @@ body {
     transform: translateX(-50%);
     text-align: center;
     top: 80px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 10px 20px;
-    border-radius: 10px;
 }
 
 .hud-right {
@@ -209,59 +204,30 @@ body {
     margin-bottom: 30px;
 }
 
-/* Мобильные стили */
-@media (max-width: 768px) {
-    .game-area {
-        width: 100%;
-        height: 100%;
-        max-width: none;
-        max-height: none;
-        border: none;
-    }
-    
+/* Адаптивность для мобильных */
+@media (max-height: 700px) {
     .big-button {
-        top: 40%;
-        padding: 25px 50px;
-        font-size: 24px;
-    }
-    
-    .hud-left {
-        top: 40px;
-    }
-    
-    #hud div {
-        font-size: 20px;
-    }
-    
-    .goal-text {
-        font-size: 52px;
-        top: 30%;
-    }
-    
-    .hud-button {
-        padding: 12px 24px;
-        font-size: 16px;
-    }
-    
-    .subscribe-button {
         padding: 15px 30px;
         font-size: 18px;
     }
     
-    .hint {
+    .goal-text {
+        font-size: 48px;
+    }
+    
+    #hud div {
         font-size: 16px;
-        bottom: 30px;
-        left: 30px;
     }
 }
 
-@media (max-height: 600px) {
-    .hud-left {
-        top: 20px;
+@media (max-width: 768px) {
+    .hud-button {
+        padding: 10px 20px;
+        font-size: 16px;
     }
     
-    .goal-text {
-        font-size: 42px;
-        top: 25%;
+    .subscribe-button {
+        padding: 12px 24px;
+        font-size: 16px;
     }
 }
