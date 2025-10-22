@@ -132,7 +132,7 @@ class GoalieClicker {
         // Загрузка изображений
         await this.loadImages();
         
-        // Загрузка звуков
+        // Загрузка звуков - теперь с обработкой ошибок
         await this.loadSounds();
     }
 
@@ -179,14 +179,26 @@ class GoalieClicker {
         for (const sound of soundsToLoad) {
             try {
                 const audio = new Audio();
+                
+                // Для GitHub Pages используем относительный путь
                 audio.src = `assets/${sound.path}`;
                 audio.preload = 'auto';
-                this.sounds[sound.key] = audio;
                 
-                // Пробуем предзагрузить
-                await audio.load();
+                // Ждем пока звук загрузится
+                await new Promise((resolve, reject) => {
+                    audio.addEventListener('canplaythrough', resolve);
+                    audio.addEventListener('error', reject);
+                    
+                    // Таймаут на случай если звук не загрузится
+                    setTimeout(resolve, 1000);
+                });
+                
+                this.sounds[sound.key] = audio;
+                console.log(`Звук загружен: ${sound.path}`);
             } catch (error) {
                 console.warn(`Не удалось загрузить звук: ${sound.path}`, error);
+                // Создаем заглушку чтобы игра не падала
+                this.sounds[sound.key] = { play: () => {}, pause: () => {} };
             }
         }
     }
@@ -208,8 +220,28 @@ class GoalieClicker {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         
         // Автозапуск аудио по первому клику (требование браузеров)
-        document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
-        document.addEventListener('touchstart', () => this.resumeAudioContext(), { once: true });
+        const enableAudio = () => {
+            this.resumeAudioContext();
+            // Проиграем тихий звук чтобы разблокировать аудио
+            this.playSilentSound();
+        };
+        document.addEventListener('click', enableAudio, { once: true });
+        document.addEventListener('touchstart', enableAudio, { once: true });
+    }
+
+    playSilentSound() {
+        // Создаем и проигрываем тихий звук чтобы разблокировать аудио в браузере
+        try {
+            const silentAudio = new Audio();
+            silentAudio.volume = 0.001;
+            silentAudio.play().then(() => {
+                silentAudio.pause();
+            }).catch(() => {
+                // Игнорируем ошибки
+            });
+        } catch (e) {
+            // Игнорируем ошибки
+        }
     }
 
     handleMouseMove(event) {
@@ -373,7 +405,7 @@ class GoalieClicker {
                     if (this.saveSoundEnabled) {
                         this.playSaveSound();
                         // Устанавливаем случайную задержку 10-15 секунд
-                        this.saveSoundCooldown = 3 + Math.random() * 3; // 10-15 секунд
+                        this.saveSoundCooldown = 10 + Math.random() * 5; // 10-15 секунд
                         this.saveSoundEnabled = false;
                     }
                 } else {
@@ -672,8 +704,9 @@ class GoalieClicker {
         if (this.muted || !this.sounds.save) return;
         
         try {
-            // Создаем копию для возможности наложения звуков
-            const saveSound = this.sounds.save.cloneNode();
+            // Для GitHub Pages создаем новый экземпляр Audio каждый раз
+            const saveSound = new Audio();
+            saveSound.src = 'assets/save.mp3';
             saveSound.volume = 1.0;
             saveSound.play().catch(e => {
                 console.warn('Не удалось воспроизвести звук сейва:', e);
@@ -687,13 +720,9 @@ class GoalieClicker {
         if (this.muted || !this.sounds.miss) return;
         
         try {
-            // Останавливаем звуки сейвов перед воспроизведением пропуска
-            if (this.sounds.save) {
-                this.sounds.save.pause();
-                this.sounds.save.currentTime = 0;
-            }
-            
-            const missSound = this.sounds.miss.cloneNode();
+            // Для GitHub Pages создаем новый экземпляр Audio каждый раз
+            const missSound = new Audio();
+            missSound.src = 'assets/miss.mp3';
             missSound.volume = 1.0;
             missSound.play().catch(e => {
                 console.warn('Не удалось воспроизвести звук пропуска:', e);
