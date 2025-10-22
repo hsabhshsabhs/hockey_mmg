@@ -9,7 +9,7 @@ body {
     background: #0a121e;
     color: white;
     overflow: hidden;
-    touch-action: none;
+    touch-action: manipulation;
     user-select: none;
     width: 100vw;
     height: 100vh;
@@ -41,41 +41,73 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(10, 18, 30, 0.95);
-    z-index: 20;
+    background: rgba(10, 18, 30, 0.9);
+    z-index: 10;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Экран ориентации */
-.orientation-message {
-    text-align: center;
-    padding: 20px;
+.game-area {
+    position: relative;
+    width: 95%;
+    height: 95%;
+    max-width: 1600px;
+    max-height: 900px;
+    background: #0e1e37;
+    border: 2px solid #1a3a5f;
 }
 
-.orientation-message h2 {
-    font-size: 32px;
-    margin-bottom: 20px;
-    color: #ffc832;
+/* Кнопки */
+.big-button {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 20px 40px;
+    font-size: 22px;
+    background: #ffc832;
+    color: #0a0a0a;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
 }
 
-.orientation-message p {
-    font-size: 18px;
-    margin-bottom: 30px;
-    color: #c8c8c8;
+.big-button:hover {
+    background: #ffd966;
 }
 
-.phone-icon {
-    font-size: 80px;
-    transform: rotate(90deg);
-    animation: rotatePhone 2s infinite;
+.hud-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #505064;
+    color: white;
+    border: 2px solid #9696aa;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
-@keyframes rotatePhone {
-    0%, 100% { transform: rotate(90deg); }
-    50% { transform: rotate(70deg); }
+.hud-button:hover {
+    background: #646478;
+}
+
+.subscribe-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: #2e7d32;
+    color: white;
+    border: 2px solid #4caf50;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.subscribe-button:hover {
+    background: #1b5e20;
 }
 
 /* HUD */
@@ -94,7 +126,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    top: 20px;
+    top: 80px;
     background: rgba(0, 0, 0, 0.5);
     padding: 10px 20px;
     border-radius: 10px;
@@ -113,26 +145,11 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Кнопки */
-.hud-button {
-    padding: 8px 16px;
-    font-size: 14px;
-    background: #505064;
-    color: white;
-    border: 2px solid #9696aa;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.hud-button:hover {
-    background: #646478;
-}
-
 /* Надпись ГОЛ */
 .goal-text {
     position: absolute;
-    top: 30%;
-    left: 50%;
+    top: 24.2%;
+    left: 46.9%;
     transform: translate(-50%, -50%);
     font-size: 72px;
     font-weight: bold;
@@ -150,29 +167,101 @@ body {
     pointer-events: none;
 }
 
-/* Адаптивность для мобильных в горизонтальной ориентации */
-@media (max-height: 500px) {
-    .hud-left {
-        top: 10px;
+/* Отладочная информация */
+.debug-info {
+    position: absolute;
+    top: 100px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: monospace;
+    z-index: 100;
+}
+
+/* Подсказки */
+.hint {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 14px;
+    color: #c8c8c8;
+}
+
+/* Game Over экран */
+.game-over-content {
+    text-align: center;
+    background: rgba(14, 30, 55, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    border: 2px solid #1a3a5f;
+}
+
+.game-over-content h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #ff6b6b;
+}
+
+.game-over-content p {
+    font-size: 24px;
+    margin-bottom: 30px;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+    .game-area {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border: none;
     }
     
-    .hud-right {
-        top: 10px;
+    .big-button {
+        top: 40%;
+        padding: 25px 50px;
+        font-size: 24px;
+    }
+    
+    .hud-left {
+        top: 40px;
     }
     
     #hud div {
-        font-size: 14px;
+        font-size: 20px;
     }
     
     .goal-text {
-        font-size: 48px;
-        top: 25%;
+        font-size: 52px;
+        top: 30%;
+    }
+    
+    .hud-button {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+    
+    .subscribe-button {
+        padding: 15px 30px;
+        font-size: 18px;
+    }
+    
+    .hint {
+        font-size: 16px;
+        bottom: 30px;
+        left: 30px;
     }
 }
 
-@media (max-width: 700px) {
-    .hud-button {
-        padding: 6px 12px;
-        font-size: 12px;
+@media (max-height: 600px) {
+    .hud-left {
+        top: 20px;
+    }
+    
+    .goal-text {
+        font-size: 42px;
+        top: 25%;
     }
 }
