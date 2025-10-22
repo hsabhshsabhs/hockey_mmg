@@ -11,6 +11,8 @@ body {
     overflow: hidden;
     touch-action: none;
     user-select: none;
+    width: 100vw;
+    height: 100vh;
 }
 
 #gameContainer {
@@ -39,73 +41,41 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(10, 18, 30, 0.9);
-    z-index: 10;
+    background: rgba(10, 18, 30, 0.95);
+    z-index: 20;
 }
 
 .hidden {
     display: none !important;
 }
 
-.game-area {
-    position: relative;
-    width: 95%;
-    height: 95%;
-    max-width: 1600px;
-    max-height: 900px;
-    background: #0e1e37;
-    border: 2px solid #1a3a5f;
+/* Экран ориентации */
+.orientation-message {
+    text-align: center;
+    padding: 20px;
 }
 
-/* Кнопки */
-.big-button {
-    position: absolute;
-    top: 25%;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 20px 40px;
-    font-size: 22px;
-    background: #ffc832;
-    color: #0a0a0a;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
+.orientation-message h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #ffc832;
 }
 
-.big-button:hover {
-    background: #ffd966;
+.orientation-message p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #c8c8c8;
 }
 
-.hud-button {
-    padding: 8px 16px;
-    font-size: 14px;
-    background: #505064;
-    color: white;
-    border: 2px solid #9696aa;
-    border-radius: 6px;
-    cursor: pointer;
+.phone-icon {
+    font-size: 80px;
+    transform: rotate(90deg);
+    animation: rotatePhone 2s infinite;
 }
 
-.hud-button:hover {
-    background: #646478;
-}
-
-.subscribe-button {
-    padding: 12px 24px;
-    font-size: 16px;
-    background: #2e7d32;
-    color: white;
-    border: 2px solid #4caf50;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-.subscribe-button:hover {
-    background: #1b5e20;
+@keyframes rotatePhone {
+    0%, 100% { transform: rotate(90deg); }
+    50% { transform: rotate(70deg); }
 }
 
 /* HUD */
@@ -124,7 +94,10 @@ body {
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    top: 80px;
+    top: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 10px;
 }
 
 .hud-right {
@@ -140,11 +113,26 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Кнопки */
+.hud-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #505064;
+    color: white;
+    border: 2px solid #9696aa;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.hud-button:hover {
+    background: #646478;
+}
+
 /* Надпись ГОЛ */
 .goal-text {
     position: absolute;
-    top: 24.2%;
-    left: 46.9%;
+    top: 30%;
+    left: 50%;
     transform: translate(-50%, -50%);
     font-size: 72px;
     font-weight: bold;
@@ -162,72 +150,29 @@ body {
     pointer-events: none;
 }
 
-/* Отладочная информация */
-.debug-info {
-    position: absolute;
-    top: 100px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-family: monospace;
-    z-index: 100;
-}
-
-/* Подсказки */
-.hint {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    font-size: 14px;
-    color: #c8c8c8;
-}
-
-/* Game Over экран */
-.game-over-content {
-    text-align: center;
-    background: rgba(14, 30, 55, 0.95);
-    padding: 40px;
-    border-radius: 15px;
-    border: 2px solid #1a3a5f;
-}
-
-.game-over-content h2 {
-    font-size: 36px;
-    margin-bottom: 20px;
-    color: #ff6b6b;
-}
-
-.game-over-content p {
-    font-size: 24px;
-    margin-bottom: 30px;
-}
-
-/* Адаптивность для мобильных */
-@media (max-height: 700px) {
-    .big-button {
-        padding: 15px 30px;
-        font-size: 18px;
+/* Адаптивность для мобильных в горизонтальной ориентации */
+@media (max-height: 500px) {
+    .hud-left {
+        top: 10px;
+    }
+    
+    .hud-right {
+        top: 10px;
+    }
+    
+    #hud div {
+        font-size: 14px;
     }
     
     .goal-text {
         font-size: 48px;
-    }
-    
-    #hud div {
-        font-size: 16px;
+        top: 25%;
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
     .hud-button {
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    
-    .subscribe-button {
-        padding: 12px 24px;
-        font-size: 16px;
+        padding: 6px 12px;
+        font-size: 12px;
     }
 }
