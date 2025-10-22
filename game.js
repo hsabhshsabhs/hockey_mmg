@@ -28,19 +28,27 @@ class GoalieClicker {
         this.saveSoundCooldown = 0;
         this.saveSoundEnabled = true;
         
+        // Линии отладки
+        this.debugLines = {
+            vertical: [],
+            horizontal: []
+        };
+        this.showDebugLines = false;
+        this.lineEditingMode = null; // 'vertical', 'horizontal', или null
+        
         // Адаптированный конфиг для вертикальной ориентации
         this.config = {
             "bg": {
                 "path": "background.png",
                 "x_rel": 0.001,
                 "y_rel": 0.25,
-                "scale": 0.5
+                "scale": 0.3
             },
             "goalieL": {
                 "img": "keepL.png",
                 "x_rel": 0.3,
                 "y_rel": 0.6,
-                "scale": 0.3
+                "scale": 0.2
             },
             "goalieR": {
                 "img": "keepR.png", 
@@ -97,44 +105,67 @@ class GoalieClicker {
 
     resizeCanvas() {
         const dpr = window.devicePixelRatio || 1;
-        const cssWidth = window.innerWidth;
-        const cssHeight = window.innerHeight;
+        const gameArea = document.querySelector('.game-area');
+        
+        if (gameArea) {
+            const rect = gameArea.getBoundingClientRect();
+            
+            // Устанавливаем канвас поверх .game-area
+            this.canvas.style.width = rect.width + 'px';
+            this.canvas.style.height = rect.height + 'px';
+            this.canvas.style.left = rect.left + 'px';
+            this.canvas.style.top = rect.top + 'px';
 
-        this.canvas.style.width = cssWidth + 'px';
-        this.canvas.style.height = cssHeight + 'px';
+            this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+            this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+        } else {
+            // Fallback
+            const cssWidth = window.innerWidth;
+            const cssHeight = window.innerHeight;
 
-        this.canvas.width = Math.max(1, Math.round(cssWidth * dpr));
-        this.canvas.height = Math.max(1, Math.round(cssHeight * dpr));
+            this.canvas.style.width = cssWidth + 'px';
+            this.canvas.style.height = cssHeight + 'px';
+            this.canvas.style.left = '0px';
+            this.canvas.style.top = '0px';
+
+            this.canvas.width = Math.max(1, Math.round(cssWidth * dpr));
+            this.canvas.height = Math.max(1, Math.round(cssHeight * dpr));
+        }
 
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         this.computeGameRect();
         this.updateUIElements();
-        
-        // Принудительная перерисовка
-        if (!document.getElementById('startScreen').classList.contains('hidden')) {
-            this.renderStaticScreens();
-        }
     }
 
     computeGameRect() {
-        // Используем те же размеры, что и у .game-area в CSS
-        const maxW = Math.floor(window.innerWidth * 0.95);
-        const maxH = Math.floor(window.innerHeight * 0.95);
-        
-        // Берем максимально возможный размер в пределах 9:16
-        let targetW = Math.min(maxW, maxH * this.ASPECT_W / this.ASPECT_H);
-        let targetH = targetW * this.ASPECT_H / this.ASPECT_W;
-        
-        // Если высота не помещается - корректируем
-        if (targetH > maxH) {
-            targetH = maxH;
-            targetW = targetH * this.ASPECT_W / this.ASPECT_H;
+        const gameArea = document.querySelector('.game-area');
+        if (!gameArea) {
+            // Fallback логика
+            const maxW = Math.floor(window.innerWidth * 0.95);
+            const maxH = Math.floor(window.innerHeight * 0.95);
+            
+            let targetW = Math.min(maxW, maxH * this.ASPECT_W / this.ASPECT_H);
+            let targetH = targetW * this.ASPECT_H / this.ASPECT_W;
+            
+            if (targetH > maxH) {
+                targetH = maxH;
+                targetW = targetH * this.ASPECT_W / this.ASPECT_H;
+            }
+            
+            const gx = (window.innerWidth - targetW) / 2;
+            const gy = (window.innerHeight - targetH) / 2;
+            
+            this.gameRect = { x: gx, y: gy, width: targetW, height: targetH };
+            return;
         }
-        
-        const gx = (window.innerWidth - targetW) / 2;
-        const gy = (window.innerHeight - targetH) / 2;
-        
-        this.gameRect = { x: gx, y: gy, width: targetW, height: targetH };
+
+        const rect = gameArea.getBoundingClientRect();
+        this.gameRect = {
+            x: 0, // Относительно канваса
+            y: 0, // Относительно канваса  
+            width: rect.width,
+            height: rect.height
+        };
     }
 
     updateUIElements() {
@@ -221,32 +252,6 @@ class GoalieClicker {
         
         document.addEventListener('click', () => this.resumeAudioContext(), { once: true });
         document.addEventListener('touchstart', () => this.resumeAudioContext(), { once: true });
-        
-        // Обработчик изменения ориентации
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                this.forceRedraw();
-            }, 100);
-        });
-        
-        // Обработчик изменения видимости страницы
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                setTimeout(() => {
-                    this.forceRedraw();
-                }, 100);
-            }
-        });
-    }
-
-    forceRedraw() {
-        this.resizeCanvas();
-        if (!document.getElementById('startScreen').classList.contains('hidden') || 
-            !document.getElementById('gameOverScreen').classList.contains('hidden')) {
-            this.renderStaticScreens();
-        } else {
-            this.render();
-        }
     }
 
     handleMouseMove(event) {
@@ -324,8 +329,6 @@ class GoalieClicker {
         document.getElementById('gameOverScreen').classList.add('hidden');
         document.getElementById('hud').classList.remove('hidden');
         
-        // Пересчитываем размеры при старте игры
-        this.resizeCanvas();
         this.resetGameState();
         this.playBackgroundMusic();
     }
@@ -459,6 +462,13 @@ class GoalieClicker {
             debugText += `<br>Звук: ${this.muted ? 'выкл' : 'вкл'}`;
             debugText += `<br>Sound CD: ${this.saveSoundCooldown.toFixed(1)}s, Enabled: ${this.saveSoundEnabled}`;
             
+            // Информация о линиях отладки
+            debugText += `<br>Линии: ${this.showDebugLines ? 'ВКЛ' : 'ВЫКЛ'}`;
+            debugText += `<br>Режим: ${this.lineEditingMode || 'нет'}`;
+            debugText += `<br>Верт. линии: ${this.debugLines.vertical.length}`;
+            debugText += `<br>Гориз. линии: ${this.debugLines.horizontal.length}`;
+            debugText += `<br>F3 - линии, F4 - верт., F5 - гориз., Del - удалить`;
+            
             debugElement.innerHTML = debugText;
         }
     }
@@ -483,30 +493,10 @@ class GoalieClicker {
         
         this.drawGameArea();
         
-        // Для стартового экрана рисуем дополнительные элементы
-        if (!document.getElementById('startScreen').classList.contains('hidden')) {
-            this.drawStartScreenElements();
-        }
-        
         if (this.debugMode) {
             this.drawDebugMarkers();
             this.drawCursorCoordinates();
         }
-    }
-
-    drawStartScreenElements() {
-        // Рисуем вратарей на стартовом экране
-        this.drawGoalie();
-        
-        // Можно добавить текст или другие элементы
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = '24px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(
-            'GOALIE CLICKER', 
-            this.gameRect.x + this.gameRect.width / 2, 
-            this.gameRect.y + this.gameRect.height * 0.3
-        );
     }
 
     drawCursorCoordinates() {
@@ -525,12 +515,19 @@ class GoalieClicker {
         this.ctx.stroke();
         
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.fillRect(this.mouseX + 15, this.mouseY + 15, 150, 40);
+        this.ctx.fillRect(this.mouseX + 15, this.mouseY + 15, 150, 60);
         
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = '14px Arial';
         this.ctx.fillText(`X: ${relX.toFixed(3)}`, this.mouseX + 20, this.mouseY + 35);
         this.ctx.fillText(`Y: ${relY.toFixed(3)}`, this.mouseX + 20, this.mouseY + 55);
+        
+        // Индикатор режима редактирования
+        if (this.lineEditingMode) {
+            this.ctx.fillStyle = this.lineEditingMode === 'vertical' ? '#00ffff' : '#ffa500';
+            this.ctx.fillText(`Режим: ${this.lineEditingMode === 'vertical' ? 'ВЕРТИКАЛЬ' : 'ГОРИЗОНТАЛЬ'}`, 
+                             this.mouseX + 20, this.mouseY + 75);
+        }
     }
 
     drawGameArea() {
@@ -619,6 +616,42 @@ class GoalieClicker {
             });
         });
         
+        // Отрисовка пользовательских линий отладки
+        if (this.showDebugLines) {
+            // Вертикальные линии
+            this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([3, 3]);
+            this.debugLines.vertical.forEach(relX => {
+                const x = this.gameRect.x + relX * this.gameRect.width;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, this.gameRect.y);
+                this.ctx.lineTo(x, this.gameRect.y + this.gameRect.height);
+                this.ctx.stroke();
+                
+                // Подпись координаты
+                this.ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText(relX.toFixed(3), x + 5, this.gameRect.y + 15);
+            });
+
+            // Горизонтальные линии
+            this.ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
+            this.debugLines.horizontal.forEach(relY => {
+                const y = this.gameRect.y + relY * this.gameRect.height;
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.gameRect.x, y);
+                this.ctx.lineTo(this.gameRect.x + this.gameRect.width, y);
+                this.ctx.stroke();
+                
+                // Подпись координаты
+                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.8)';
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText(relY.toFixed(3), this.gameRect.x + 5, y - 5);
+            });
+            this.ctx.setLineDash([]);
+        }
+        
         if (this.debugMode) {
             this.ctx.strokeStyle = '#ff0000';
             this.ctx.lineWidth = 2;
@@ -659,7 +692,22 @@ class GoalieClicker {
             return;
         }
 
-        this.goalieSide = this.goalieSide === "L" ? "R" : "L";
+        // Если активен режим редактирования линий - добавляем линию
+        if (this.debugMode && this.lineEditingMode) {
+            const relX = (x - this.gameRect.x) / this.gameRect.width;
+            const relY = (y - this.gameRect.y) / this.gameRect.height;
+            
+            if (this.lineEditingMode === 'vertical') {
+                this.debugLines.vertical.push(relX);
+                console.log(`Добавлена вертикальная линия: x = ${relX.toFixed(3)}`);
+            } else if (this.lineEditingMode === 'horizontal') {
+                this.debugLines.horizontal.push(relY);
+                console.log(`Добавлена горизонтальная линия: y = ${relY.toFixed(3)}`);
+            }
+        } else {
+            // Обычное переключение вратаря
+            this.goalieSide = this.goalieSide === "L" ? "R" : "L";
+        }
     }
 
     handleKeyDown(event) {
@@ -689,6 +737,36 @@ class GoalieClicker {
                 event.preventDefault();
                 this.infiniteLives = !this.infiniteLives;
                 this.updateHUD();
+                break;
+            case 'F3':
+                event.preventDefault();
+                this.showDebugLines = !this.showDebugLines;
+                break;
+            case 'F4':
+                event.preventDefault();
+                if (this.lineEditingMode === 'vertical') {
+                    this.lineEditingMode = null;
+                } else {
+                    this.lineEditingMode = 'vertical';
+                }
+                break;
+            case 'F5':
+                event.preventDefault();
+                if (this.lineEditingMode === 'horizontal') {
+                    this.lineEditingMode = null;
+                } else {
+                    this.lineEditingMode = 'horizontal';
+                }
+                break;
+            case 'Delete':
+            case 'Backspace':
+                if (this.debugMode) {
+                    if (this.lineEditingMode === 'vertical' && this.debugLines.vertical.length > 0) {
+                        this.debugLines.vertical.pop();
+                    } else if (this.lineEditingMode === 'horizontal' && this.debugLines.horizontal.length > 0) {
+                        this.debugLines.horizontal.pop();
+                    }
+                }
                 break;
         }
     }
