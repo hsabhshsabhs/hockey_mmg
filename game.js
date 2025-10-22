@@ -17,6 +17,7 @@ class GoalieClicker {
         this.debugMode = false;
         this.infiniteLives = false;
         this.muted = false;
+        this.isMobile = this.detectMobile();
         
         // Позиция курсора для отладки
         this.mouseX = 0;
@@ -75,33 +76,24 @@ class GoalieClicker {
         this.init();
     }
 
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (window.innerWidth <= 768) ||
+               ('ontouchstart' in window);
+    }
+
     init() {
         this.setupCanvas();
         this.setupEventListeners();
         this.loadAssets();
         this.resetGameState();
-        this.checkOrientation();
+        this.setupUI();
         this.gameLoop();
     }
 
     setupCanvas() {
         this.resizeCanvas();
-        window.addEventListener('resize', () => {
-            this.resizeCanvas();
-            this.checkOrientation();
-        });
-    }
-
-    checkOrientation() {
-        const orientationScreen = document.getElementById('orientationScreen');
-        const isPortrait = window.innerHeight > window.innerWidth;
-        
-        if (isPortrait) {
-            orientationScreen.classList.remove('hidden');
-        } else {
-            orientationScreen.classList.add('hidden');
-            this.startGame();
-        }
+        window.addEventListener('resize', () => this.resizeCanvas());
     }
 
     resizeCanvas() {
@@ -112,12 +104,19 @@ class GoalieClicker {
     }
 
     computeGameRect() {
-        // Для горизонтальной ориентации используем всю доступную область
-        const targetW = window.innerWidth;
-        const targetH = window.innerHeight;
+        const maxW = Math.floor(window.innerWidth * 0.95);
+        const maxH = Math.floor(window.innerHeight * 0.95);
         
-        const gx = 0;
-        const gy = 0;
+        let targetW = maxW;
+        let targetH = Math.floor(targetW * this.ASPECT_H / this.ASPECT_W);
+        
+        if (targetH > maxH) {
+            targetH = maxH;
+            targetW = Math.floor(targetH * this.ASPECT_W / this.ASPECT_H);
+        }
+        
+        const gx = (window.innerWidth - targetW) / 2;
+        const gy = (window.innerHeight - targetH) / 2;
         
         this.gameRect = { x: gx, y: gy, width: targetW, height: targetH };
     }
@@ -125,13 +124,13 @@ class GoalieClicker {
     updateUIElements() {
         const goalElement = document.getElementById('goalText');
         goalElement.style.left = `${window.innerWidth * 0.5}px`;
-        goalElement.style.top = `${window.innerHeight * 0.3}px`;
+        goalElement.style.top = `${window.innerHeight * 0.242}px`;
     }
 
     async loadAssets() {
         this.assets = {};
         await this.loadImages();
-        await this.loadSounds();
+        // Звуки загружаются по требованию
     }
 
     loadImages() {
@@ -160,13 +159,11 @@ class GoalieClicker {
         });
     }
 
-    async loadSounds() {
-        this.sounds = {};
-        // Просто инициализируем объект для фоновой музыки
-    }
-
     setupEventListeners() {
+        document.getElementById('startButton').addEventListener('click', () => this.startGame());
+        document.getElementById('restartButton').addEventListener('click', () => this.startGame());
         document.getElementById('muteButton').addEventListener('click', () => this.toggleMute());
+        document.getElementById('subscribeButton').addEventListener('click', () => this.openVK());
         
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         this.canvas.addEventListener('touchstart', (e) => this.handleTouch(e), { passive: false });
@@ -178,13 +175,26 @@ class GoalieClicker {
         
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         
-        // Обработка смены ориентации
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                this.resizeCanvas();
-                this.checkOrientation();
-            }, 100);
-        });
+        // Автозапуск аудио по первому клику
+        this.enableAudio();
+    }
+
+    enableAudio() {
+        // Создаем и сразу останавливаем звук чтобы разблокировать аудио
+        try {
+            const silentAudio = new Audio();
+            silentAudio.volume = 0.001;
+            const playPromise = silentAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    silentAudio.pause();
+                }).catch(() => {
+                    // Игнорируем ошибки
+                });
+            }
+        } catch (e) {
+            // Игнорируем ошибки
+        }
     }
 
     handleMouseMove(event) {
@@ -200,9 +210,20 @@ class GoalieClicker {
         );
     }
 
-    startGame() {
-        document.getElementById('hud').classList.remove('hidden');
-        this.playBackgroundMusic();
+    setupUI() {
+        const hintElement = document.getElementById('startHint');
+        if (this.isMobile) {
+            hintElement.textContent = 'Тап по экрану — переключить вратаря';
+        } else {
+            hintElement.textContent = 'Клик/тап по экрану — переключить вратаря во время игры';
+        }
+        
+        const debugHint = document.createElement('div');
+        debugHint.className = 'hint';
+        debugHint.style.bottom = '50px';
+        debugHint.style.color = '#ff6b6b';
+        debugHint.textContent = 'DEBUG: F1 - отладка, F2 - беск. жизни, M - звук';
+        document.querySelector('.game-area').appendChild(debugHint);
     }
 
     resetGameState() {
@@ -240,13 +261,23 @@ class GoalieClicker {
         this.lineY = this.config.line.y_rel * this.gameRect.height;
     }
 
+    startGame() {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        
+        this.resetGameState();
+        this.playBackgroundMusic();
+    }
+
     gameLoop() {
         const now = performance.now();
         const dt = (now - (this.lastTime || now)) / 1000;
         this.lastTime = now;
 
-        const orientationScreen = document.getElementById('orientationScreen');
-        if (!orientationScreen.classList.contains('hidden')) {
+        if (!document.getElementById('startScreen').classList.contains('hidden') || 
+            !document.getElementById('gameOverScreen').classList.contains('hidden')) {
+            this.renderStaticScreens();
             requestAnimationFrame(() => this.gameLoop());
             return;
         }
@@ -357,6 +388,13 @@ class GoalieClicker {
         this.drawGoalie();
     }
 
+    renderStaticScreens() {
+        this.ctx.fillStyle = '#0a121e';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.drawGameArea();
+    }
+
     drawGameArea() {
         this.ctx.fillStyle = '#0e1e37';
         this.ctx.fillRect(this.gameRect.x, this.gameRect.y, this.gameRect.width, this.gameRect.height);
@@ -459,27 +497,32 @@ class GoalieClicker {
         if (this.muted) return;
         
         try {
+            // Создаем новый Audio для фоновой музыки
             const audio = new Audio('assets/game.mp3');
             audio.loop = true;
             audio.volume = 0.7;
             audio.play().catch(e => {
                 console.log('Фоновая музыка не воспроизвелась');
             });
-            this.sounds.background = audio;
+            // Сохраняем ссылку для управления
+            this.backgroundMusic = audio;
         } catch (error) {
             console.log('Ошибка фоновой музыки');
         }
     }
 
     stopBackgroundMusic() {
-        if (this.sounds.background) {
-            this.sounds.background.pause();
-            this.sounds.background.currentTime = 0;
+        if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
         }
     }
 
     gameOver() {
-        this.resetGameState();
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('finalScore').textContent = `Ваш рекорд: ${this.score}`;
+        this.stopBackgroundMusic();
     }
 
     toggleMute() {
@@ -492,6 +535,10 @@ class GoalieClicker {
         } else {
             this.playBackgroundMusic();
         }
+    }
+
+    openVK() {
+        window.open('https://vk.com/club233320861', '_blank');
     }
 }
 
