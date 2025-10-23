@@ -98,30 +98,40 @@ class GoalieClicker {
         this.gameLoop();
     }
 
-    setupCanvas() {
+   setupCanvas() {
+    this.resizeCanvas();
+    // Слушаем изменения размера окна
+    window.addEventListener('resize', () => {
         this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-    }
+        this.updateCSSVariables();
+    });
+    
+    // Также слушаем изменения ориентации
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            this.resizeCanvas();
+            this.updateCSSVariables();
+        }, 100);
+    });
+}
 
-   resizeCanvas() {
+resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
     
-    // Фиксированный размер 412x892
-    const fixedWidth = 412;
-    const fixedHeight = 892;
+    // Получаем вычисленные CSS-переменные
+    const gameArea = document.querySelector('.game-area');
+    if (!gameArea) return;
     
-    // Центрируем канвас
-    const left = (window.innerWidth - fixedWidth) / 2;
-    const top = (window.innerHeight - fixedHeight) / 2;
+    const rect = gameArea.getBoundingClientRect();
     
-    // Устанавливаем канвас с фиксированным размером
-    this.canvas.style.width = fixedWidth + 'px';
-    this.canvas.style.height = fixedHeight + 'px';
-    this.canvas.style.left = left + 'px';
-    this.canvas.style.top = top + 'px';
+    // Устанавливаем канвас поверх .game-area
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+    this.canvas.style.left = rect.left + 'px';
+    this.canvas.style.top = rect.top + 'px';
 
-    this.canvas.width = Math.max(1, Math.round(fixedWidth * dpr));
-    this.canvas.height = Math.max(1, Math.round(fixedHeight * dpr));
+    this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.computeGameRect();
@@ -129,45 +139,39 @@ class GoalieClicker {
 }
 
 computeGameRect() {
-    // Фиксированный размер игровой области
+    const gameArea = document.querySelector('.game-area');
+    if (!gameArea) {
+        // Fallback
+        this.gameRect = { x: 0, y: 0, width: 412, height: 892 };
+        return;
+    }
+
+    const rect = gameArea.getBoundingClientRect();
+    const canvasRect = this.canvas.getBoundingClientRect();
+    
     this.gameRect = {
         x: 0,
         y: 0,
-        width: 412,
-        height: 892
+        width: rect.width,
+        height: rect.height
     };
 }
 
-    computeGameRect() {
-        const gameArea = document.querySelector('.game-area');
-        if (!gameArea) {
-            // Fallback логика
-            const maxW = Math.floor(window.innerWidth * 0.95);
-            const maxH = Math.floor(window.innerHeight * 0.95);
-            
-            let targetW = Math.min(maxW, maxH * this.ASPECT_W / this.ASPECT_H);
-            let targetH = targetW * this.ASPECT_H / this.ASPECT_W;
-            
-            if (targetH > maxH) {
-                targetH = maxH;
-                targetW = targetH * this.ASPECT_W / this.ASPECT_H;
-            }
-            
-            const gx = (window.innerWidth - targetW) / 2;
-            const gy = (window.innerHeight - targetH) / 2;
-            
-            this.gameRect = { x: gx, y: gy, width: targetW, height: targetH };
-            return;
-        }
-
+// Добавьте этот метод для обновления CSS переменных при ресайзе
+updateCSSVariables() {
+    const root = document.documentElement;
+    const gameArea = document.querySelector('.game-area');
+    
+    if (gameArea) {
         const rect = gameArea.getBoundingClientRect();
-        this.gameRect = {
-            x: 0, // Относительно канваса
-            y: 0, // Относительно канваса  
-            width: rect.width,
-            height: rect.height
-        };
+        const vmin = Math.min(rect.width, rect.height) / 100;
+        
+        // Динамически обновляем переменные если нужно
+        root.style.setProperty('--current-width', rect.width + 'px');
+        root.style.setProperty('--current-height', rect.height + 'px');
+        root.style.setProperty('--current-vmin', vmin + 'px');
     }
+}
 
     updateUIElements() {
         const goalElement = document.getElementById('goalText');
