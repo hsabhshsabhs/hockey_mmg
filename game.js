@@ -8,7 +8,7 @@ class GoalieClicker {
         this.FPS = 60;
         this.ASPECT_W = 9;    // Вертикальная ориентация
         this.ASPECT_H = 16;
-        this.PUCK_RADIUS = 14;
+        this.PUCK_RADIUS = 7;
         this.START_LIVES = 3;
         this.MAX_SPEED_MULT = 5;
         this.SPEED_RAMP_TIME = 120.0;
@@ -41,43 +41,43 @@ class GoalieClicker {
             "bg": {
                 "path": "background.png",
                 "x_rel": 0.001,
-                "y_rel": 0.25,
-                "scale": 0.3
+                "y_rel": 0.15,
+                "scale": 0.4
             },
             "goalieL": {
                 "img": "keepL.png",
-                "x_rel": 0.3,
-                "y_rel": 0.6,
-                "scale": 0.2
+                "x_rel": 0.22,
+                "y_rel": 0.41,
+                "scale": 0.18
             },
             "goalieR": {
                 "img": "keepR.png", 
-                "x_rel": 0.6,
-                "y_rel": 0.6,
-                "scale": 0.3
+                "x_rel": 0.445,
+                "y_rel": 0.41,
+                "scale": 0.18
             },
             "spawns": [
                 {
-                    "x_rel": 0.2,
-                    "y_rel": 0.85
+                    "x_rel": 0.1,
+                    "y_rel": 0.75
                 },
                 {
-                    "x_rel": 0.8,
-                    "y_rel": 0.85
+                    "x_rel": 0.85,
+                    "y_rel": 0.75
                 }
             ],
             "targets": [
                 {
-                    "x_rel": 0.3,
-                    "y_rel": 0.45
+                    "x_rel": 0.379,
+                    "y_rel": 0.506
                 },
                 {
-                    "x_rel": 0.7,
-                    "y_rel": 0.45
+                    "x_rel": 0.626,
+                    "y_rel": 0.506
                 }
             ],
             "line": {
-                "y_rel": 0.5
+                "y_rel": 0.51
             }
         };
         
@@ -886,7 +886,7 @@ class Puck {
         
         ctx.fillStyle = '#000000';
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 14, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, 7, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
