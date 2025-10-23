@@ -111,12 +111,13 @@ body {
     background: #646478;
 }
 
-.subscribe-button {
+/* Стили для кнопки VK */
+.vk-button {
     padding: 12px 24px;
     font-size: var(--font-size);
-    background: #2e7d32;
+    background: #0077ff;
     color: white;
-    border: 2px solid #4caf50;
+    border: 2px solid #4d94ff;
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
@@ -125,8 +126,27 @@ body {
     min-height: 44px;
 }
 
-.subscribe-button:hover {
-    background: #1b5e20;
+.vk-button:hover {
+    background: #0066dd;
+}
+
+/* Стили для кнопки Telegram */
+.telegram-button {
+    padding: 12px 24px;
+    font-size: var(--font-size);
+    background: #0088cc;
+    color: white;
+    border: 2px solid #33aadd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    min-width: 100px;
+    min-height: 44px;
+}
+
+.telegram-button:hover {
+    background: #0077bb;
 }
 
 /* HUD */
@@ -162,9 +182,8 @@ body {
 }
 
 /* Надпись ГОЛ */
-/* Надпись ГОЛ */
 .goal-text {
-    position: fixed; /* Изменяем на fixed для позиционирования относительно окна браузера */
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -180,7 +199,7 @@ body {
         0px 2px 0 #000,
         -2px 0px 0 #000,
         2px 0px 0 #000;
-    z-index: 1000; /* Увеличиваем z-index чтобы было поверх всех элементов */
+    z-index: 1000;
     pointer-events: none;
 }
 
@@ -271,7 +290,8 @@ body {
         min-height: 44px;
     }
     
-    #subscribeButton {
+    .vk-button,
+    .telegram-button {
         padding: 10px 20px;
         font-size: 14px;
         min-width: 120px;
