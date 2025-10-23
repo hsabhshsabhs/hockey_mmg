@@ -74,7 +74,7 @@ body {
 /* Кнопки */
 .big-button {
     position: absolute;
-    top: 30%;
+    top: 25%;
     left: 50%;
     transform: translateX(-50%);
     padding: 15px 30px;
