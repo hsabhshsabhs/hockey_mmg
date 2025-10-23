@@ -162,8 +162,12 @@ body {
 }
 
 /* Надпись ГОЛ */
+/* Надпись ГОЛ */
 .goal-text {
-    position: absolute;
+    position: fixed; /* Изменяем на fixed для позиционирования относительно окна браузера */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 8vmin;
     font-weight: bold;
     color: #ff3232;
@@ -176,9 +180,8 @@ body {
         0px 2px 0 #000,
         -2px 0px 0 #000,
         2px 0px 0 #000;
-    z-index: 6;
+    z-index: 1000; /* Увеличиваем z-index чтобы было поверх всех элементов */
     pointer-events: none;
-    transform: translate(-50%, -50%);
 }
 
 /* Отладочная информация */
@@ -240,5 +243,38 @@ body {
     
     .big-button {
         padding: 10px 20px;
+    }
+}
+
+/* Десктопная версия - Game Over экран как на мобильном */
+@media (min-width: 769px) {
+    #gameOverScreen .game-over-content {
+        width: 90%;
+        max-width: 400px;
+        padding: 30px;
+    }
+    
+    #gameOverScreen h2 {
+        font-size: 32px;
+        margin-bottom: 15px;
+    }
+    
+    #gameOverScreen p {
+        font-size: 20px;
+        margin-bottom: 25px;
+    }
+    
+    #restartButton {
+        padding: 24px 48px;
+        font-size: 28px;
+        min-width: 140px;
+        min-height: 44px;
+    }
+    
+    #subscribeButton {
+        padding: 10px 20px;
+        font-size: 14px;
+        min-width: 120px;
+        min-height: 40px;
     }
 }
