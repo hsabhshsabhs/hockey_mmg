@@ -170,13 +170,15 @@ class GoalieClicker {
         this.setupSpawnsAndTargets();
     }
 
-    updateUIElements() {
-        const goalElement = document.getElementById('goalText');
-        if (goalElement) {
-            goalElement.style.left = `${this.gameRect.x + this.gameRect.width * 0.5}px`;
-            goalElement.style.top = `${this.gameRect.y + this.gameRect.height * 0.15}px`;
-        }
+updateUIElements() {
+    const goalElement = document.getElementById('goalText');
+    if (goalElement) {
+        // Позиционируем по центру всего экрана
+        goalElement.style.left = '50%';
+        goalElement.style.top = '20%';
+        goalElement.style.transform = 'translate(-50%, -20%)';
     }
+}
 
     async loadAssets() {
         this.assets = {};
@@ -278,16 +280,16 @@ class GoalieClicker {
     setupUI() {
         const hintElement = document.getElementById('startHint');
         if (this.isMobile) {
-            hintElement.textContent = 'Тап по экрану — переключить вратаря';
+            hintElement.textContent = 'Тап по экрану — переместить вратаря';
         } else {
-            hintElement.textContent = 'Клик/тап по экрану — переключить вратаря во время игры';
+            hintElement.textContent = 'Клик/тап по экрану — переместить вратаря во время игры';
         }
         
         const debugHint = document.createElement('div');
         debugHint.className = 'hint';
         debugHint.style.bottom = '50px';
         debugHint.style.color = '#ff6b6b';
-        debugHint.textContent = 'DEBUG: F1 - отладка, F2 - беск. жизни, M - звук';
+        debugHint.textContent = '';
         document.querySelector('.game-area').appendChild(debugHint);
     }
 
