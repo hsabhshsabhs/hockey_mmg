@@ -170,15 +170,15 @@ class GoalieClicker {
         this.setupSpawnsAndTargets();
     }
 
-updateUIElements() {
-    const goalElement = document.getElementById('goalText');
-    if (goalElement) {
-        // Позиционируем по центру всего экрана
-        goalElement.style.left = '50%';
-        goalElement.style.top = '20%';
-        goalElement.style.transform = 'translate(-50%, -20%)';
+    updateUIElements() {
+        const goalElement = document.getElementById('goalText');
+        if (goalElement) {
+            // Позиционируем по центру всего экрана
+            goalElement.style.left = '50%';
+            goalElement.style.top = '20%';
+            goalElement.style.transform = 'translate(-50%, -20%)';
+        }
     }
-}
 
     async loadAssets() {
         this.assets = {};
@@ -243,7 +243,8 @@ updateUIElements() {
         document.getElementById('startButton').addEventListener('click', () => this.startGame());
         document.getElementById('restartButton').addEventListener('click', () => this.startGame());
         document.getElementById('muteButton').addEventListener('click', () => this.toggleMute());
-        document.getElementById('subscribeButton').addEventListener('click', () => this.openVK());
+        document.getElementById('vkButton').addEventListener('click', () => this.openVK());
+        document.getElementById('telegramButton').addEventListener('click', () => this.openTelegram());
         
         this.canvas.addEventListener('click', (e) => this.handleClick(e));
         this.canvas.addEventListener('touchstart', (e) => this.handleTouch(e), { passive: false });
@@ -842,6 +843,10 @@ updateUIElements() {
 
     openVK() {
         window.open('https://vk.com/club233320861', '_blank');
+    }
+
+    openTelegram() {
+        window.open('https://t.me/ai_petrov_dmitry', '_blank');
     }
 }
 
