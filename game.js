@@ -48,33 +48,33 @@ class GoalieClicker {
             },
             "goalieL": {
                 "img": "keepL.png",
-                "x_rel": 0.3,
-                "y_rel": 0.6,
-                "scale": 0.3
+                "x_rel": 0.21,
+                "y_rel": 0.35,
+                "scale": 0.42
             },
             "goalieR": {
                 "img": "keepR.png", 
-                "x_rel": 0.6,
-                "y_rel": 0.6,
-                "scale": 0.3
+                "x_rel": 0.45,
+                "y_rel": 0.35,
+                "scale": 0.42
             },
             "spawns": [
                 {
                     "x_rel": 0.2,
-                    "y_rel": 0.85
+                    "y_rel": 1.0
                 },
                 {
                     "x_rel": 0.8,
-                    "y_rel": 0.85
+                    "y_rel": 1.0
                 }
             ],
             "targets": [
                 {
-                    "x_rel": 0.3,
+                    "x_rel": 0.4,
                     "y_rel": 0.45
                 },
                 {
-                    "x_rel": 0.7,
+                    "x_rel": 0.6,
                     "y_rel": 0.45
                 }
             ],
