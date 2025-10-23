@@ -42,7 +42,7 @@ class GoalieClicker {
                 "path": "background.png",
                 "x_rel": 0.001,
                 "y_rel": 0.15,
-                "scale": 0.4
+                "scale": 0.3
             },
             "goalieL": {
                 "img": "keepL.png",
