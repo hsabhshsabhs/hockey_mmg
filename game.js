@@ -6,9 +6,7 @@ class GoalieClicker {
         
         // Конфигурация
         this.FPS = 60;
-        this.ASPECT_W = 9;    // Вертикальная ориентация
-        this.ASPECT_H = 16;
-        this.PUCK_RADIUS = 7;
+        this.PUCK_RADIUS = 14;
         this.START_LIVES = 3;
         this.MAX_SPEED_MULT = 5;
         this.SPEED_RAMP_TIME = 120.0;
@@ -34,50 +32,54 @@ class GoalieClicker {
             horizontal: []
         };
         this.showDebugLines = false;
-        this.lineEditingMode = null; // 'vertical', 'horizontal', или null
+        this.lineEditingMode = null;
         
-        // Адаптированный конфиг для вертикальной ориентации
+        // Background система
+        this.bgRect = { x: 0, y: 0, width: 0, height: 0 };
+        this.bgScale = 1;
+        
+        // Конфигурация относительно background
         this.config = {
             "bg": {
                 "path": "background.png",
-                "x_rel": 0.001,
-                "y_rel": 0.15,
-                "scale": 0.3
+                "width": 1024,
+                "height": 1470,
+                "aspectRatio": 1024/1470
             },
             "goalieL": {
                 "img": "keepL.png",
-                "x_rel": 0.22,
-                "y_rel": 0.41,
-                "scale": 0.18
+                "x_rel": 0.3,
+                "y_rel": 0.6,
+                "scale": 0.3
             },
             "goalieR": {
                 "img": "keepR.png", 
-                "x_rel": 0.445,
-                "y_rel": 0.41,
-                "scale": 0.18
+                "x_rel": 0.6,
+                "y_rel": 0.6,
+                "scale": 0.3
             },
             "spawns": [
                 {
-                    "x_rel": 0.1,
-                    "y_rel": 0.75
+                    "x_rel": 0.2,
+                    "y_rel": 0.85
                 },
                 {
-                    "x_rel": 0.85,
-                    "y_rel": 0.75
+                    "x_rel": 0.8,
+                    "y_rel": 0.85
                 }
             ],
             "targets": [
                 {
-                    "x_rel": 0.379,
-                    "y_rel": 0.506
+                    "x_rel": 0.3,
+                    "y_rel": 0.45
                 },
                 {
-                    "x_rel": 0.626,
-                    "y_rel": 0.506
+                    "x_rel": 0.7,
+                    "y_rel": 0.45
                 }
             ],
             "line": {
-                "y_rel": 0.51
+                "y_rel": 0.5
             }
         };
         
@@ -98,80 +100,75 @@ class GoalieClicker {
         this.gameLoop();
     }
 
-   setupCanvas() {
-    this.resizeCanvas();
-    // Слушаем изменения размера окна
-    window.addEventListener('resize', () => {
+    setupCanvas() {
         this.resizeCanvas();
-        this.updateCSSVariables();
-    });
-    
-    // Также слушаем изменения ориентации
-    window.addEventListener('orientationchange', () => {
-        setTimeout(() => {
-            this.resizeCanvas();
-            this.updateCSSVariables();
-        }, 100);
-    });
-}
-
-resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    
-    // Получаем вычисленные CSS-переменные
-    const gameArea = document.querySelector('.game-area');
-    if (!gameArea) return;
-    
-    const rect = gameArea.getBoundingClientRect();
-    
-    // Устанавливаем канвас поверх .game-area
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
-    this.canvas.style.left = rect.left + 'px';
-    this.canvas.style.top = rect.top + 'px';
-
-    this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
-    this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
-
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.computeGameRect();
-    this.updateUIElements();
-}
-
-computeGameRect() {
-    const gameArea = document.querySelector('.game-area');
-    if (!gameArea) {
-        // Fallback
-        this.gameRect = { x: 0, y: 0, width: 412, height: 892 };
-        return;
+        window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.resizeCanvas(), 100);
+        });
     }
 
-    const rect = gameArea.getBoundingClientRect();
-    const canvasRect = this.canvas.getBoundingClientRect();
-    
-    this.gameRect = {
-        x: 0,
-        y: 0,
-        width: rect.width,
-        height: rect.height
-    };
-}
-
-// Добавьте этот метод для обновления CSS переменных при ресайзе
-updateCSSVariables() {
-    const root = document.documentElement;
-    const gameArea = document.querySelector('.game-area');
-    
-    if (gameArea) {
-        const rect = gameArea.getBoundingClientRect();
-        const vmin = Math.min(rect.width, rect.height) / 100;
+    resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const gameArea = document.querySelector('.game-area');
         
-        // Динамически обновляем переменные если нужно
-        root.style.setProperty('--current-width', rect.width + 'px');
-        root.style.setProperty('--current-height', rect.height + 'px');
-        root.style.setProperty('--current-vmin', vmin + 'px');
+        if (gameArea) {
+            const rect = gameArea.getBoundingClientRect();
+            
+            this.canvas.style.width = rect.width + 'px';
+            this.canvas.style.height = rect.height + 'px';
+            this.canvas.style.left = rect.left + 'px';
+            this.canvas.style.top = rect.top + 'px';
+
+            this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+            this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        this.computeGameRect();
+        this.updateUIElements();
     }
-}
+
+    computeGameRect() {
+        const gameArea = document.querySelector('.game-area');
+        if (!gameArea) {
+            this.gameRect = { x: 0, y: 0, width: 412, height: 892 };
+            return;
+        }
+
+        const rect = gameArea.getBoundingClientRect();
+        
+        // Вычисляем размер background с сохранением соотношения сторон
+        const bgAspect = this.config.bg.aspectRatio;
+        const containerAspect = rect.width / rect.height;
+        
+        if (containerAspect > bgAspect) {
+            // Контейнер шире - подгоняем по высоте
+            this.bgRect.height = rect.height;
+            this.bgRect.width = rect.height * bgAspect;
+            this.bgRect.x = (rect.width - this.bgRect.width) / 2;
+            this.bgRect.y = 0;
+        } else {
+            // Контейнер уже - подгоняем по ширине
+            this.bgRect.width = rect.width;
+            this.bgRect.height = rect.width / bgAspect;
+            this.bgRect.x = 0;
+            this.bgRect.y = (rect.height - this.bgRect.height) / 2;
+        }
+        
+        this.bgScale = this.bgRect.width / this.config.bg.width;
+        
+        // Игровая область теперь совпадает с background
+        this.gameRect = {
+            x: this.bgRect.x,
+            y: this.bgRect.y,
+            width: this.bgRect.width,
+            height: this.bgRect.height
+        };
+        
+        this.setupSpawnsAndTargets();
+    }
 
     updateUIElements() {
         const goalElement = document.getElementById('goalText');
@@ -317,16 +314,16 @@ updateCSSVariables() {
 
     setupSpawnsAndTargets() {
         this.spawns = this.config.spawns.map(s => ({
-            x: s.x_rel * this.gameRect.width,
-            y: s.y_rel * this.gameRect.height
+            x: s.x_rel * this.bgRect.width,
+            y: s.y_rel * this.bgRect.height
         }));
 
         this.targets = this.config.targets.map(t => ({
-            x: t.x_rel * this.gameRect.width,
-            y: t.y_rel * this.gameRect.height
+            x: t.x_rel * this.bgRect.width,
+            y: t.y_rel * this.bgRect.height
         }));
 
-        this.lineY = this.config.line.y_rel * this.gameRect.height;
+        this.lineY = this.config.line.y_rel * this.bgRect.height;
     }
 
     startGame() {
@@ -384,7 +381,7 @@ updateCSSVariables() {
         const target = this.targets[targetIndex];
         
         const baseSpeed = (260 + Math.random() * 100) * this.speedMult;
-        this.pucks.push(new Puck(spawn.x, spawn.y, target.x, target.y, baseSpeed));
+        this.pucks.push(new Puck(spawn.x, spawn.y, target.x, target.y, baseSpeed, this.PUCK_RADIUS * this.bgScale));
     }
 
     updatePucks(dt) {
@@ -405,7 +402,7 @@ updateCSSVariables() {
             if ((prevY < this.lineY && puck.y >= this.lineY) || 
                 (prevY > this.lineY && puck.y <= this.lineY)) {
                 
-                const mid = this.gameRect.width * 0.5;
+                const mid = this.bgRect.width * 0.5;
                 const targetSide = puck.tx < mid ? "L" : "R";
                 
                 if (this.goalieSide === targetSide) {
@@ -461,13 +458,12 @@ updateCSSVariables() {
     updateDebugInfo() {
         const debugElement = document.getElementById('debugInfo');
         if (debugElement) {
-            let debugText = `Отладка: Spawns: ${this.spawns.length}, Targets: ${this.targets.length}`;
-            debugText += `<br>LineY: ${this.lineY.toFixed(1)}, SpeedMult: ${this.speedMult.toFixed(2)}`;
+            let debugText = `Background: ${this.bgRect.width.toFixed(0)}x${this.bgRect.height.toFixed(0)}`;
+            debugText += `<br>Scale: ${this.bgScale.toFixed(3)}`;
+            debugText += `<br>Game Area: ${this.gameRect.width.toFixed(0)}x${this.gameRect.height.toFixed(0)}`;
+            debugText += `<br>LineY: ${this.lineY.toFixed(1)} (${this.config.line.y_rel})`;
             debugText += `<br>Pucks: ${this.pucks.length}, Goalie: ${this.goalieSide}`;
-            debugText += `<br>Звук: ${this.muted ? 'выкл' : 'вкл'}`;
-            debugText += `<br>Sound CD: ${this.saveSoundCooldown.toFixed(1)}s, Enabled: ${this.saveSoundEnabled}`;
             
-            // Информация о линиях отладки
             debugText += `<br>Линии: ${this.showDebugLines ? 'ВКЛ' : 'ВЫКЛ'}`;
             debugText += `<br>Режим: ${this.lineEditingMode || 'нет'}`;
             debugText += `<br>Верт. линии: ${this.debugLines.vertical.length}`;
@@ -527,7 +523,6 @@ updateCSSVariables() {
         this.ctx.fillText(`X: ${relX.toFixed(3)}`, this.mouseX + 20, this.mouseY + 35);
         this.ctx.fillText(`Y: ${relY.toFixed(3)}`, this.mouseX + 20, this.mouseY + 55);
         
-        // Индикатор режима редактирования
         if (this.lineEditingMode) {
             this.ctx.fillStyle = this.lineEditingMode === 'vertical' ? '#00ffff' : '#ffa500';
             this.ctx.fillText(`Режим: ${this.lineEditingMode === 'vertical' ? 'ВЕРТИКАЛЬ' : 'ГОРИЗОНТАЛЬ'}`, 
@@ -545,15 +540,13 @@ updateCSSVariables() {
     }
 
     drawBackground() {
-        const bgConfig = this.config.bg;
-        const scale = bgConfig.scale || 1.0;
-        const x = this.gameRect.x + (bgConfig.x_rel || 0) * this.gameRect.width;
-        const y = this.gameRect.y + (bgConfig.y_rel || 0) * this.gameRect.height;
-        
-        const width = this.assets.bg.width * scale;
-        const height = this.assets.bg.height * scale;
-        
-        this.ctx.drawImage(this.assets.bg, x, y, width, height);
+        this.ctx.drawImage(
+            this.assets.bg, 
+            this.bgRect.x, 
+            this.bgRect.y, 
+            this.bgRect.width, 
+            this.bgRect.height
+        );
     }
 
     drawGoalie() {
@@ -562,52 +555,55 @@ updateCSSVariables() {
         
         if (this.assets && this.assets[assetKey] && this.assets[assetKey].complete) {
             const config = goalieConfig || {};
-            const scale = config.scale || 1.0;
-            const x = this.gameRect.x + (config.x_rel || 0.22) * this.gameRect.width;
-            const y = this.gameRect.y + (config.y_rel || 0.55) * this.gameRect.height;
+            const scale = (config.scale || 1.0) * this.bgScale;
+            
+            const x = this.bgRect.x + (config.x_rel || 0.3) * this.bgRect.width;
+            const y = this.bgRect.y + (config.y_rel || 0.6) * this.bgRect.height;
             
             const width = this.assets[assetKey].width * scale;
             const height = this.assets[assetKey].height * scale;
             
             this.ctx.drawImage(this.assets[assetKey], x, y, width, height);
         } else {
-            const gx = this.gameRect.x + (this.goalieSide === "L" ? this.gameRect.width * 0.3 : this.gameRect.width * 0.6);
-            const gy = this.gameRect.y + this.gameRect.height * 0.6;
+            const x = this.bgRect.x + (this.goalieSide === "L" ? 0.3 : 0.6) * this.bgRect.width;
+            const y = this.bgRect.y + 0.6 * this.bgRect.height;
             
             this.ctx.fillStyle = '#0c3c78';
-            this.ctx.fillRect(gx - 40, gy - 40, 80, 80);
+            this.ctx.fillRect(x - 40 * this.bgScale, y - 40 * this.bgScale, 80 * this.bgScale, 80 * this.bgScale);
         }
     }
 
     drawDebugMarkers() {
         this.ctx.fillStyle = '#00ff00';
         this.spawns.forEach((spawn, index) => {
-            const x = this.gameRect.x + spawn.x;
-            const y = this.gameRect.y + spawn.y;
+            const x = this.bgRect.x + spawn.x;
+            const y = this.bgRect.y + spawn.y;
             
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+            this.ctx.arc(x, y, 8 * this.bgScale, 0, Math.PI * 2);
             this.ctx.fill();
             
             this.ctx.fillStyle = '#00ff00';
-            this.ctx.font = '12px Arial';
-            this.ctx.fillText(`S${index}`, x + 10, y - 10);
-            this.ctx.fillText(`(${(spawn.x/this.gameRect.width).toFixed(3)}, ${(spawn.y/this.gameRect.height).toFixed(3)})`, x + 10, y + 20);
+            this.ctx.font = `${12 * this.bgScale}px Arial`;
+            this.ctx.fillText(`S${index}`, x + 10 * this.bgScale, y - 10 * this.bgScale);
+            this.ctx.fillText(`(${this.config.spawns[index].x_rel.toFixed(3)}, ${this.config.spawns[index].y_rel.toFixed(3)})`, 
+                             x + 10 * this.bgScale, y + 20 * this.bgScale);
         });
 
         this.ctx.fillStyle = '#ff0000';
         this.targets.forEach((target, index) => {
-            const x = this.gameRect.x + target.x;
-            const y = this.gameRect.y + target.y;
+            const x = this.bgRect.x + target.x;
+            const y = this.bgRect.y + target.y;
             
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+            this.ctx.arc(x, y, 8 * this.bgScale, 0, Math.PI * 2);
             this.ctx.fill();
             
             this.ctx.fillStyle = '#ff0000';
-            this.ctx.font = '12px Arial';
-            this.ctx.fillText(`T${index}`, x + 10, y - 10);
-            this.ctx.fillText(`(${(target.x/this.gameRect.width).toFixed(3)}, ${(target.y/this.gameRect.height).toFixed(3)})`, x + 10, y + 20);
+            this.ctx.font = `${12 * this.bgScale}px Arial`;
+            this.ctx.fillText(`T${index}`, x + 10 * this.bgScale, y - 10 * this.bgScale);
+            this.ctx.fillText(`(${this.config.targets[index].x_rel.toFixed(3)}, ${this.config.targets[index].y_rel.toFixed(3)})`, 
+                             x + 10 * this.bgScale, y + 20 * this.bgScale);
         });
 
         this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
@@ -615,56 +611,51 @@ updateCSSVariables() {
         this.spawns.forEach(spawn => {
             this.targets.forEach(target => {
                 this.ctx.beginPath();
-                this.ctx.moveTo(this.gameRect.x + spawn.x, this.gameRect.y + spawn.y);
-                this.ctx.lineTo(this.gameRect.x + target.x, this.gameRect.y + target.y);
+                this.ctx.moveTo(this.bgRect.x + spawn.x, this.bgRect.y + spawn.y);
+                this.ctx.lineTo(this.bgRect.x + target.x, this.bgRect.y + target.y);
                 this.ctx.stroke();
             });
         });
         
-        // Отрисовка пользовательских линий отладки
         if (this.showDebugLines) {
-            // Вертикальные линии
             this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = 2 * this.bgScale;
             this.ctx.setLineDash([3, 3]);
             this.debugLines.vertical.forEach(relX => {
-                const x = this.gameRect.x + relX * this.gameRect.width;
+                const x = this.bgRect.x + relX * this.bgRect.width;
                 this.ctx.beginPath();
-                this.ctx.moveTo(x, this.gameRect.y);
-                this.ctx.lineTo(x, this.gameRect.y + this.gameRect.height);
+                this.ctx.moveTo(x, this.bgRect.y);
+                this.ctx.lineTo(x, this.bgRect.y + this.bgRect.height);
                 this.ctx.stroke();
                 
-                // Подпись координаты
                 this.ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-                this.ctx.font = '12px Arial';
-                this.ctx.fillText(relX.toFixed(3), x + 5, this.gameRect.y + 15);
+                this.ctx.font = `${12 * this.bgScale}px Arial`;
+                this.ctx.fillText(relX.toFixed(3), x + 5 * this.bgScale, this.bgRect.y + 15 * this.bgScale);
             });
 
-            // Горизонтальные линии
             this.ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
             this.debugLines.horizontal.forEach(relY => {
-                const y = this.gameRect.y + relY * this.gameRect.height;
+                const y = this.bgRect.y + relY * this.bgRect.height;
                 this.ctx.beginPath();
-                this.ctx.moveTo(this.gameRect.x, y);
-                this.ctx.lineTo(this.gameRect.x + this.gameRect.width, y);
+                this.ctx.moveTo(this.bgRect.x, y);
+                this.ctx.lineTo(this.bgRect.x + this.bgRect.width, y);
                 this.ctx.stroke();
                 
-                // Подпись координаты
                 this.ctx.fillStyle = 'rgba(255, 165, 0, 0.8)';
-                this.ctx.font = '12px Arial';
-                this.ctx.fillText(relY.toFixed(3), this.gameRect.x + 5, y - 5);
+                this.ctx.font = `${12 * this.bgScale}px Arial`;
+                this.ctx.fillText(relY.toFixed(3), this.bgRect.x + 5 * this.bgScale, y - 5 * this.bgScale);
             });
             this.ctx.setLineDash([]);
         }
         
         if (this.debugMode) {
             this.ctx.strokeStyle = '#ff0000';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = 2 * this.bgScale;
             this.ctx.setLineDash([5, 5]);
             this.ctx.beginPath();
-            const lineYAbsolute = this.gameRect.y + this.lineY;
-            this.ctx.moveTo(this.gameRect.x, lineYAbsolute);
-            this.ctx.lineTo(this.gameRect.x + this.gameRect.width, lineYAbsolute);
+            const lineYAbsolute = this.bgRect.y + this.lineY;
+            this.ctx.moveTo(this.bgRect.x, lineYAbsolute);
+            this.ctx.lineTo(this.bgRect.x + this.bgRect.width, lineYAbsolute);
             this.ctx.stroke();
             this.ctx.setLineDash([]);
         }
@@ -697,10 +688,9 @@ updateCSSVariables() {
             return;
         }
 
-        // Если активен режим редактирования линий - добавляем линию
         if (this.debugMode && this.lineEditingMode) {
-            const relX = (x - this.gameRect.x) / this.gameRect.width;
-            const relY = (y - this.gameRect.y) / this.gameRect.height;
+            const relX = (x - this.bgRect.x) / this.bgRect.width;
+            const relY = (y - this.bgRect.y) / this.bgRect.height;
             
             if (this.lineEditingMode === 'vertical') {
                 this.debugLines.vertical.push(relX);
@@ -710,7 +700,6 @@ updateCSSVariables() {
                 console.log(`Добавлена горизонтальная линия: y = ${relY.toFixed(3)}`);
             }
         } else {
-            // Обычное переключение вратаря
             this.goalieSide = this.goalieSide === "L" ? "R" : "L";
         }
     }
@@ -855,11 +844,12 @@ updateCSSVariables() {
 }
 
 class Puck {
-    constructor(sx, sy, tx, ty, baseSpeed) {
+    constructor(sx, sy, tx, ty, baseSpeed, radius = 14) {
         this.x = sx;
         this.y = sy;
         this.tx = tx;
         this.ty = ty;
+        this.radius = radius;
         
         const dx = tx - sx;
         const dy = ty - sy;
@@ -891,7 +881,7 @@ class Puck {
         
         ctx.fillStyle = '#000000';
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 7, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
