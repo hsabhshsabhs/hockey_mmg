@@ -103,39 +103,40 @@ class GoalieClicker {
         window.addEventListener('resize', () => this.resizeCanvas());
     }
 
-    resizeCanvas() {
-        const dpr = window.devicePixelRatio || 1;
-        const gameArea = document.querySelector('.game-area');
-        
-        if (gameArea) {
-            const rect = gameArea.getBoundingClientRect();
-            
-            // Устанавливаем канвас поверх .game-area
-            this.canvas.style.width = rect.width + 'px';
-            this.canvas.style.height = rect.height + 'px';
-            this.canvas.style.left = rect.left + 'px';
-            this.canvas.style.top = rect.top + 'px';
+   resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Фиксированный размер 412x892
+    const fixedWidth = 412;
+    const fixedHeight = 892;
+    
+    // Центрируем канвас
+    const left = (window.innerWidth - fixedWidth) / 2;
+    const top = (window.innerHeight - fixedHeight) / 2;
+    
+    // Устанавливаем канвас с фиксированным размером
+    this.canvas.style.width = fixedWidth + 'px';
+    this.canvas.style.height = fixedHeight + 'px';
+    this.canvas.style.left = left + 'px';
+    this.canvas.style.top = top + 'px';
 
-            this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
-            this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
-        } else {
-            // Fallback
-            const cssWidth = window.innerWidth;
-            const cssHeight = window.innerHeight;
+    this.canvas.width = Math.max(1, Math.round(fixedWidth * dpr));
+    this.canvas.height = Math.max(1, Math.round(fixedHeight * dpr));
 
-            this.canvas.style.width = cssWidth + 'px';
-            this.canvas.style.height = cssHeight + 'px';
-            this.canvas.style.left = '0px';
-            this.canvas.style.top = '0px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.computeGameRect();
+    this.updateUIElements();
+}
 
-            this.canvas.width = Math.max(1, Math.round(cssWidth * dpr));
-            this.canvas.height = Math.max(1, Math.round(cssHeight * dpr));
-        }
-
-        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        this.computeGameRect();
-        this.updateUIElements();
-    }
+computeGameRect() {
+    // Фиксированный размер игровой области
+    this.gameRect = {
+        x: 0,
+        y: 0,
+        width: 412,
+        height: 892
+    };
+}
 
     computeGameRect() {
         const gameArea = document.querySelector('.game-area');
