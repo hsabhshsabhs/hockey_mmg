@@ -226,7 +226,6 @@ body {
     margin-bottom: 3vmin;
 }
 
-/* Убираем старые медиа-запросы, оставляем только для очень крайних случаев */
 @media (max-width: 320px) {
     :root {
         --game-width: 95vw;
